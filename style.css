@@ -13,6 +13,14 @@
     --shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
 }
 
+.dark-mode {
+    --color-bg: #121212;
+    --color-card: #1e1e1e;
+    --color-text: #e0e0e0;
+    --color-text-light: #a0a0a0;
+    --shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -29,6 +37,7 @@ body {
     display: flex;
     justify-content: center;
     min-height: 100vh;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .app-container {
@@ -465,13 +474,10 @@ button {
 .market-scroll {
     display: flex;
     overflow-x: auto;
-    gap: 1rem;
     padding-bottom: 0.5rem;
-    /* Hide scrollbar for WebKit */
-    -ms-overflow-style: none;
-    /* IE and Edge */
+    gap: 1rem;
     scrollbar-width: none;
-    /* Firefox */
+    -ms-overflow-style: none;
 }
 
 .market-scroll::-webkit-scrollbar {
@@ -482,14 +488,20 @@ button {
     background: var(--color-card);
     border-radius: var(--border-radius);
     padding: 1rem;
-    min-width: 140px;
+    min-width: 160px;
+    flex-shrink: 0;
     box-shadow: var(--shadow);
-    border-top: 4px solid var(--color-text-light);
-    /* Default color, overridden by JS */
+    border-top: 4px solid var(--color-income);
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
-    flex: 0 0 auto;
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease;
+}
+
+.market-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
 .market-title {
@@ -604,4 +616,32 @@ button {
 
 #alert-modal.active {
     display: flex !important;
+}
+
+/* Dashboard Alerts Style */
+.dashboard-alert-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0.8rem;
+    background: var(--color-card);
+    border-radius: var(--border-radius);
+    border-left: 3px solid var(--color-income);
+    font-size: 0.85rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-alert-item .btn-remove-alert {
+    background: transparent;
+    border: none;
+    color: var(--color-expense);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.dashboard-alert-item .btn-remove-alert:hover {
+    background: rgba(200, 0, 0, 0.1);
 }

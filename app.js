@@ -33,6 +33,14 @@ function initData() {
     if (rawAlerts) {
         marketAlerts = JSON.parse(rawAlerts);
     }
+
+    // Theme setup
+    const savedTheme = localStorage.getItem('rural_theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        const themeBtn = document.getElementById('btn-theme-toggle');
+        if (themeBtn) themeBtn.textContent = '☀️';
+    }
 }
 
 /* ==========================================================================
@@ -323,9 +331,44 @@ window.renderMarket = (isUpdate = false) => {
         marketContainer.appendChild(card);
     });
 
+    renderDashboardAlerts();
+
     if (!isUpdate && currentDolarPrice === 'Carregando...') {
         carregarCotacoes();
     }
+};
+
+window.renderDashboardAlerts = () => {
+    const list = document.getElementById('dashboard-active-alerts-list');
+    const section = document.getElementById('dashboard-active-alerts-section');
+    if (!list || !section) return;
+
+    list.innerHTML = '';
+
+    if (marketAlerts.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = 'block';
+
+    marketAlerts.forEach((alert, index) => {
+        const item = document.createElement('div');
+        item.className = 'dashboard-alert-item';
+
+        const condText = alert.condition === 'greater' ? 'Maior que' : 'Menor que';
+
+        item.innerHTML = `
+            <div>
+                <strong>${alert.commodity}</strong><br>
+                <span style="color: var(--color-text-light);">${condText} R$ ${alert.target.toFixed(2).replace('.', ',')}</span>
+            </div>
+            <button class="btn-remove-alert" onclick="removeAlert(${index})">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+            </button>
+        `;
+        list.appendChild(item);
+    });
 };
 
 /* ==========================================================================
@@ -860,11 +903,35 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    window.renderDashboardAlerts = () => {
+        const list = document.getElementById('dashboard-active-alerts-list');
+        if (!list) return;
+        list.innerHTML = '';
+
+        if (marketAlerts.length === 0) {
+            list.innerHTML = '<div style="color: var(--color-text-light);">Nenhum alerta configurado.</div>';
+            return;
+        }
+
+        marketAlerts.forEach((alert, index) => {
+            const div = document.createElement('div');
+            div.className = 'active-alert-item-dashboard'; // Use a specific class for dashboard items
+            div.innerHTML = `
+                <span>${alert.commodity} ${alert.condition === 'greater' ? '>' : '<'} R$ ${alert.target}</span>
+                <button class="btn-remove-alert" onclick="removeAlert(${index})">X</button>
+            `;
+            list.appendChild(div);
+        });
+    };
+
     window.removeAlert = (index) => {
         marketAlerts.splice(index, 1);
         localStorage.setItem('rural_alerts', JSON.stringify(marketAlerts));
-        window.renderActiveAlerts();
-        renderMarket(); // updates the blinking immediately
+
+        // Updates both modals and dashboard layout sync
+        if (typeof renderActiveAlerts === 'function') renderActiveAlerts();
+        if (typeof renderDashboardAlerts === 'function') renderDashboardAlerts();
+        if (typeof renderMarket === 'function') renderMarket(true);
     };
 
     // Carga final. Atualiza as views via showPage simulando clique ou chamando inicial
@@ -931,6 +998,22 @@ document.addEventListener('DOMContentLoaded', () => {
             alertForm.reset();
             toggleAlertModal(false);
             renderMarket();
+        });
+    }
+
+    const btnThemeToggle = document.getElementById('btn-theme-toggle');
+    if (btnThemeToggle) {
+        btnThemeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+
+            if (isDark) {
+                btnThemeToggle.textContent = '☀️';
+                localStorage.setItem('rural_theme', 'dark');
+            } else {
+                btnThemeToggle.textContent = '🌙';
+                localStorage.setItem('rural_theme', 'light');
+            }
         });
     }
 });
