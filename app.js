@@ -2,6 +2,7 @@
    1. ESTADO GLOBAL E INICIALIZAÇÃO
    ========================================================================== */
 let transactions = [];
+let marketAlerts = [];
 let currentType = '';
 let currentFilter = 'all';
 
@@ -26,6 +27,11 @@ function initData() {
             ...t,
             date: new Date(t.date)
         }));
+    }
+
+    const rawAlerts = localStorage.getItem('rural_alerts');
+    if (rawAlerts) {
+        marketAlerts = JSON.parse(rawAlerts);
     }
 }
 
@@ -216,6 +222,117 @@ window.renderTransactions = () => {
             });
         }
     }
+};
+
+/* ==========================================================================
+   3.5 ABA DE MERCADO
+   ========================================================================== */
+window.renderMarket = async () => {
+    const marketContainer = document.getElementById('market-cards');
+    if (!marketContainer) return;
+
+    let marketData = [];
+
+    // Tenta buscar as commodities da Brapi.dev
+    try {
+        const brapiRes = await fetch('https://brapi.dev/api/quote/BGIV26,SOJA3,CORN3?modules=summaryProfile');
+        const brapiData = await brapiRes.json();
+
+        if (brapiRes.ok && !brapiData.error && brapiData.results) {
+            const getQuote = (symbol, friendlyName) => {
+                const item = brapiData.results.find(r => r.symbol === symbol);
+                if (item && item.regularMarketPrice !== undefined) {
+                    return {
+                        name: friendlyName,
+                        price: parseFloat(item.regularMarketPrice).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+                        var: parseFloat(item.regularMarketChangePercent || 0)
+                    };
+                }
+                return null;
+            };
+
+            const boi = getQuote('BGIV26', 'Boi Gordo (B3 Mar/26)');
+            const soja = getQuote('SOJA3', 'Soja (Paranaguá/B3)');
+            const milho = getQuote('CORN3', 'Milho (Esalq/B3)');
+
+            if (boi) marketData.push(boi);
+            if (soja) marketData.push(soja);
+            if (milho) marketData.push(milho);
+
+            // Validação extra caso a API tenha retornado vazio para os símbolos
+            if (marketData.length === 0) throw new Error("Ativos não encontrados na Brapi");
+
+        } else {
+            throw new Error(brapiData.message || "Falha na resposta Brapi ou sem Token");
+        }
+    } catch (err) {
+        console.warn("Brapi indisponível ou necessita de Token. Usando fallback estático:", err.message);
+        // Fallback (06/03/2026)
+        marketData = [
+            { name: 'Boi Gordo (B3 Mar/26)', price: 'R$ 343,55', var: -0.71 },
+            { name: 'Soja (Paranaguá)', price: 'R$ 129,54', var: 1.04 },
+            { name: 'Milho (Esalq/B3)', price: 'R$ 70,24', var: 0.01 }
+        ];
+    }
+
+    // Busca o Dólar em tempo real
+    try {
+        const response = await fetch('https://economia.awesomeapi.com.br/last/USD-BRL');
+        if (response.ok) {
+            const data = await response.json();
+            const usd = data.USDBRL;
+            const price = parseFloat(usd.bid).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            const varPct = parseFloat(usd.pctChange);
+
+            marketData.push({ name: 'Dólar Comercial', price: price, var: varPct, rawPrice: parseFloat(usd.bid) });
+        } else {
+            throw new Error("API error");
+        }
+    } catch (err) {
+        console.error("Erro ao buscar cotação do dólar:", err);
+        marketData.push({ name: 'Dólar Comercial', price: 'Indisponível', var: 0, rawPrice: 0 });
+    }
+
+    marketContainer.innerHTML = '';
+
+    marketData.forEach(item => {
+        let isAlertTriggered = false;
+
+        // Verifica se há alertas que batem com esta commodity
+        marketAlerts.forEach(alert => {
+            if (item.name.includes(alert.commodity) || alert.commodity.includes(item.name)) {
+                if (alert.condition === 'greater' && item.rawPrice >= alert.target) {
+                    isAlertTriggered = true;
+                } else if (alert.condition === 'less' && item.rawPrice <= alert.target) {
+                    isAlertTriggered = true;
+                }
+            }
+        });
+
+        const card = document.createElement('div');
+        card.className = `market-card ${isAlertTriggered ? 'alert-triggered' : ''}`;
+
+        // Lógica de cores baseada nas variáveis de cor do CSS
+        const isUp = item.var >= 0;
+        const colorVar = isUp ? 'var(--color-income)' : 'var(--color-expense)';
+        const signStr = isUp ? '+' : '';
+        const arrowSvg = isUp
+            ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>`
+            : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+
+        card.style.borderTopColor = colorVar;
+
+        card.innerHTML = `
+            ${isAlertTriggered ? `<div class="alert-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg></div>` : ''}
+            <div class="market-title">${item.name}</div>
+            <div class="market-price">${item.price}</div>
+            <div class="market-var ${isUp ? 'up' : 'down'}">
+                ${arrowSvg} ${signStr}${item.var.toFixed(2).replace('.', ',')}%
+            </div>
+        `;
+
+        marketContainer.appendChild(card);
+    });
 };
 
 /* ==========================================================================
@@ -729,8 +846,98 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    window.renderActiveAlerts = () => {
+        const list = document.getElementById('active-alerts-list');
+        if (!list) return;
+        list.innerHTML = '';
+
+        if (marketAlerts.length === 0) {
+            list.innerHTML = '<div style="color: var(--color-text-light);">Nenhum alerta configurado.</div>';
+            return;
+        }
+
+        marketAlerts.forEach((alert, index) => {
+            const div = document.createElement('div');
+            div.className = 'active-alert-item';
+            div.innerHTML = `
+                <span>${alert.commodity} ${alert.condition === 'greater' ? '>' : '<'} R$ ${alert.target}</span>
+                <button class="btn-remove-alert" onclick="removeAlert(${index})">X</button>
+            `;
+            list.appendChild(div);
+        });
+    };
+
+    window.removeAlert = (index) => {
+        marketAlerts.splice(index, 1);
+        localStorage.setItem('rural_alerts', JSON.stringify(marketAlerts));
+        window.renderActiveAlerts();
+        renderMarket(); // updates the blinking immediately
+    };
+
     // Carga final. Atualiza as views via showPage simulando clique ou chamando inicial
     loadProfile();
     updateDashboard();
     renderTransactions();
+    renderMarket();
+    renderActiveAlerts();
+
+    // Eventos dos Alertas
+    const alertModal = document.getElementById('alert-modal');
+    const alertForm = document.getElementById('alert-form');
+
+    // Função para garantir a abertura do modal
+    function toggleAlertModal(show) {
+        const modal = document.getElementById('alert-modal');
+        if (modal) {
+            modal.style.display = show ? 'flex' : 'none';
+            if (show) {
+                modal.classList.add('active');
+                renderActiveAlerts();
+            } else {
+                modal.classList.remove('active');
+            }
+        }
+    }
+
+    // Forçar o clique no botão
+    document.body.addEventListener('click', function (e) {
+        if (e.target && (e.target.id === 'btn-criar-alerta' || e.target.closest('#btn-criar-alerta'))) {
+            console.log('Alerta acionado!');
+            toggleAlertModal(true);
+        }
+        if (e.target && (e.target.id === 'btn-cancel-alert' || e.target.closest('#btn-cancel-alert'))) {
+            toggleAlertModal(false);
+            if (alertForm) alertForm.reset();
+        }
+    });
+
+    if (alertModal) {
+        alertModal.addEventListener('click', (e) => {
+            if (e.target === alertModal) {
+                toggleAlertModal(false);
+                if (alertForm) alertForm.reset();
+            }
+        });
+    }
+
+    if (alertForm) {
+        alertForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const commodity = document.getElementById('alert-commodity').value;
+            const condition = document.getElementById('alert-condition').value;
+            const targetVal = parseFloat(document.getElementById('alert-target').value.replace(',', '.'));
+
+            if (isNaN(targetVal) || targetVal <= 0) {
+                alert('Informe um valor válido.');
+                return;
+            }
+
+            marketAlerts.push({ commodity, condition, target: targetVal });
+            localStorage.setItem('rural_alerts', JSON.stringify(marketAlerts));
+
+            alertForm.reset();
+            toggleAlertModal(false);
+            renderMarket();
+        });
+    }
 });

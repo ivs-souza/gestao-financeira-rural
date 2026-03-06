@@ -458,3 +458,150 @@ button {
     margin-bottom: 1.5rem;
     color: var(--color-text-light);
 }
+
+/* ==========================================================================
+   ABA DE MERCADO (COTAÇÕES)
+   ========================================================================== */
+.market-scroll {
+    display: flex;
+    overflow-x: auto;
+    gap: 1rem;
+    padding-bottom: 0.5rem;
+    /* Hide scrollbar for WebKit */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.market-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.market-card {
+    background: var(--color-card);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    min-width: 140px;
+    box-shadow: var(--shadow);
+    border-top: 4px solid var(--color-text-light);
+    /* Default color, overridden by JS */
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    flex: 0 0 auto;
+}
+
+.market-title {
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+    font-weight: 600;
+}
+
+.market-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.market-var {
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.market-var.up {
+    color: var(--color-income);
+}
+
+.market-var.down {
+    color: var(--color-expense);
+}
+
+/* ALERTS SYSTEM */
+@keyframes alert-blink {
+    0% {
+        border-top-color: var(--color-expense);
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(200, 0, 0, 0);
+    }
+
+    50% {
+        border-top-color: #ff3333;
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(200, 0, 0, 0.4);
+    }
+
+    100% {
+        border-top-color: var(--color-expense);
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(200, 0, 0, 0);
+    }
+}
+
+.market-card.alert-triggered {
+    animation: alert-blink 1.5s infinite;
+    position: relative;
+    overflow: visible;
+}
+
+.alert-icon {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: var(--color-card);
+    border-radius: 50%;
+    padding: 0.2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    display: none;
+    z-index: 10;
+}
+
+.market-card.alert-triggered .alert-icon {
+    display: flex;
+    color: var(--color-expense);
+}
+
+.active-alert-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem;
+    background: var(--color-bg);
+    border-radius: 6px;
+    border-left: 3px solid var(--color-text-light);
+}
+
+.active-alert-item .btn-remove-alert {
+    background: transparent;
+    border: none;
+    color: var(--color-expense);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: bold;
+    padding: 0.2rem 0.5rem;
+}
+
+.active-alert-item .btn-remove-alert:hover {
+    background: rgba(200, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+#alert-modal {
+    display: none !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 999999;
+    justify-content: center;
+    align-items: center;
+}
+
+#alert-modal.active {
+    display: flex !important;
+}

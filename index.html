@@ -78,6 +78,23 @@
                 </div>
             </div>
 
+            <!-- NOVA ABA DE MERCADO -->
+            <div class="market-section" style="margin-bottom: 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.8rem;">
+                        <h3 style="margin-bottom: 0;">Cotações de Mercado</h3>
+                        <button id="btn-criar-alerta"
+                            style="background: var(--color-text); color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">(+)
+                            Criar Alerta</button>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--color-text-light);">06/03/2026</div>
+                </div>
+                <div class="market-scroll" id="market-cards">
+                    <!-- Cards de mercado injetados via JS -->
+                </div>
+            </div>
+            <!-- FIM DA ABA DE MERCADO -->
+
             <div class="actions">
                 <button class="btn-income" id="btn-new-income">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -291,6 +308,52 @@
             </div>
             <button type="button" class="btn-cancel" id="btn-close-receipt"
                 style="width: 100%; background: rgb(100, 100, 100); color: white;">Fechar Comprovante</button>
+        </div>
+    </div>
+
+    <!-- Market Alert Modal -->
+    <div class="modal-overlay" id="alert-modal">
+        <div class="modal">
+            <h2 id="alert-modal-title" style="color: var(--color-text); margin-bottom: 1rem;">Criar Alerta de Preço</h2>
+            <form id="alert-form">
+                <div class="form-group">
+                    <label for="alert-commodity">Commodity</label>
+                    <select id="alert-commodity"
+                        style="width: 100%; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 10px; font-family: inherit; font-size: 1rem; outline: none; background: #fafafa; cursor: pointer;">
+                        <option value="Boi Gordo (B3 Mar/26)">Boi Gordo</option>
+                        <option value="Soja (Paranaguá)">Soja</option>
+                        <option value="Soja (Paranaguá/B3)">Soja (Esalq/B3 Alternativa)</option>
+                        <option value="Milho (Esalq/B3)">Milho</option>
+                        <option value="Dólar Comercial">Dólar Comercial</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="alert-condition">Condição</label>
+                    <select id="alert-condition"
+                        style="width: 100%; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 10px; font-family: inherit; font-size: 1rem; outline: none; background: #fafafa; cursor: pointer;">
+                        <option value="greater">Maior que (>)</option>
+                        <option value="less">Menor que (<)< /option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="alert-target">Valor Alvo (R$)</label>
+                    <input type="number" id="alert-target" step="0.01" required placeholder="0,00">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" id="btn-cancel-alert">Cancelar</button>
+                    <button type="submit" class="btn-save" id="btn-save-alert"
+                        style="background: var(--color-income);">Salvar Alerta</button>
+                </div>
+            </form>
+
+            <div style="margin-top: 2rem;">
+                <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--color-text-light);">Alertas Ativos
+                </h4>
+                <div id="active-alerts-list"
+                    style="font-size: 0.85rem; color: var(--color-text); display: flex; flex-direction: column; gap: 0.5rem;">
+                    <!-- Injetado via JS -->
+                </div>
+            </div>
         </div>
     </div>
 
