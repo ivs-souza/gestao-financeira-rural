@@ -227,80 +227,36 @@ window.renderTransactions = () => {
 /* ==========================================================================
    3.5 ABA DE MERCADO
    ========================================================================== */
+const PRECOS_MERCADO = {
+    boi: "282.50",
+    soja: "134.20",
+    milho: "58.90"
+};
+
 let currentDolarPrice = 'Carregando...';
 let currentDolarVar = 0;
 let currentDolarRaw = 0;
+let lastMarketUpdate = '';
 
-async function fetchRSSCotacoes() {
-    try {
-        const resp = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://www.noticiasagricolas.com.br/rss/cotacoes.xml');
-        const data = await resp.json();
-
-        if (data.status !== 'ok') throw new Error('Falha na resposta do RSS2JSON');
-
-        let novasCotacoes = [];
-
-        const extractPrice = (keyword, friendlyName) => {
-            // Procura o item no RSS onde o title ou content inclui a keyword (ex: "Boi", "Soja")
-            const article = data.items.find(i => i.title.toLowerCase().includes(keyword.toLowerCase()));
-            if (article) {
-                // Regex simples para capturar um padrão 'R$ 343,55' do título
-                const match = article.title.match(/R\$\s*[\d,.]+/);
-                const priceStr = match ? match[0] : 'R$ 0,00';
-
-                let raw = 0;
-                if (match) {
-                    // Converte o valor monetário R$ xxx.xx,xx para float (rawPrice) para os alertas funcionarem
-                    const numStr = match[0].replace('R$', '').trim().replace(/\./g, '').replace(',', '.');
-                    raw = parseFloat(numStr);
-                }
-
-                return { name: friendlyName, price: priceStr, var: 0, rawPrice: raw };
-            }
-            return null;
-        };
-
-        const boi = extractPrice('boi', 'Boi Gordo (B3 Mar/26)');
-        const soja = extractPrice('soja', 'Soja (Paranaguá)');
-        const milho = extractPrice('milho', 'Milho (Esalq/B3)');
-
-        if (boi) novasCotacoes.push(boi);
-        if (soja) novasCotacoes.push(soja);
-        if (milho) novasCotacoes.push(milho);
-
-        if (novasCotacoes.length > 0) {
-            localStorage.setItem('rural_cotacoes_rss', JSON.stringify(novasCotacoes));
-            return novasCotacoes;
-        } else {
-            throw new Error('Commodities padrões não encontradas no XML do RSS');
-        }
-
-    } catch (e) {
-        console.warn('Erro ao buscar RSS das cotações. Usando Fallback:', e);
-        const saved = localStorage.getItem('rural_cotacoes_rss');
-        if (saved) {
-            return JSON.parse(saved);
-        } else {
-            // Valor Padrão Estático de Fallback
-            return [
-                { name: 'Boi Gordo (B3 Mar/26)', price: 'R$ 343,55', var: -0.71, rawPrice: 343.55 },
-                { name: 'Soja (Paranaguá)', price: 'R$ 129,54', var: 1.04, rawPrice: 129.54 },
-                { name: 'Milho (Esalq/B3)', price: 'R$ 70,24', var: 0.01, rawPrice: 70.24 }
-            ];
-        }
-    }
+function syncAgroData() {
+    return [
+        { name: 'Boi Gordo (B3 Mar/26)', price: 'R$ ' + PRECOS_MERCADO.boi.replace('.', ','), var: -0.71, rawPrice: parseFloat(PRECOS_MERCADO.boi) },
+        { name: 'Soja (Paranaguá)', price: 'R$ ' + PRECOS_MERCADO.soja.replace('.', ','), var: 1.04, rawPrice: parseFloat(PRECOS_MERCADO.soja) },
+        { name: 'Milho (Esalq/B3)', price: 'R$ ' + PRECOS_MERCADO.milho.replace('.', ','), var: 0.01, rawPrice: parseFloat(PRECOS_MERCADO.milho) }
+    ];
 }
 
 async function carregarCotacoes() {
-    let marketData = await fetchRSSCotacoes();
-
     try {
         const resp = await fetch('https://economia.awesomeapi.com.br/last/USD-BRL');
+        if (!resp.ok) throw new Error('API do Dólar indisponível');
+
         const data = await resp.json();
         const bid = parseFloat(data.USDBRL.bid);
         currentDolarPrice = bid.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         currentDolarVar = parseFloat(data.USDBRL.pctChange);
         currentDolarRaw = bid;
+        lastMarketUpdate = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
         console.log('Dólar atualizado:', currentDolarPrice);
 
@@ -308,6 +264,7 @@ async function carregarCotacoes() {
     } catch (error) {
         console.error('Erro ao buscar dólar:', error);
         currentDolarPrice = 'Indisponível';
+        lastMarketUpdate = 'Erro';
         window.renderMarket(true);
     }
 }
@@ -316,12 +273,8 @@ window.renderMarket = (isUpdate = false) => {
     const marketContainer = document.getElementById('market-cards');
     if (!marketContainer) return;
 
-    let marketData = [
-        { name: 'Boi Gordo (B3 Mar/26)', price: 'R$ 343,55', var: -0.71, rawPrice: 343.55 },
-        { name: 'Soja (Paranaguá)', price: 'R$ 129,54', var: 1.04, rawPrice: 129.54 },
-        { name: 'Milho (Esalq/B3)', price: 'R$ 70,24', var: 0.01, rawPrice: 70.24 },
-        { name: 'Dólar Comercial', price: currentDolarPrice, var: currentDolarVar, rawPrice: currentDolarRaw }
-    ];
+    let marketData = syncAgroData();
+    marketData.push({ name: 'Dólar Comercial', price: currentDolarPrice, var: currentDolarVar, rawPrice: currentDolarRaw });
 
     marketContainer.innerHTML = '';
 
@@ -352,12 +305,18 @@ window.renderMarket = (isUpdate = false) => {
 
         card.style.borderTopColor = colorVar;
 
+        const isDolar = item.name === 'Dólar Comercial';
+        let dateLabel = isDolar ? lastMarketUpdate : new Date().toLocaleDateString('pt-BR');
+
         card.innerHTML = `
             ${isAlertTriggered ? `<div class="alert-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg></div>` : ''}
             <div class="market-title">${item.name}</div>
             <div class="market-price">${item.price}</div>
             <div class="market-var ${isUp ? 'up' : 'down'}">
                 ${arrowSvg} ${signStr}${item.var.toFixed(2).replace('.', ',')}%
+            </div>
+            <div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 4px; opacity: 0.8;">
+                Atualizado em: ${dateLabel}
             </div>
         `;
 
