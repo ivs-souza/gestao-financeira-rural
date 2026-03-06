@@ -651,7 +651,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const btnProExport = document.getElementById('btn-pro-export');
     if (btnProExport) {
-        btnProExport.onclick = function () {
+        btnProExport.onclick = function (e) {
+            e.preventDefault(); // Impede qualquer comportamento padrão do navegador
+
             // 1. Verificação de dados
             if (!transactions || transactions.length === 0) {
                 alert('Não há dados para exportar. Adicione transações primeiro.');
@@ -700,20 +702,26 @@ document.addEventListener('DOMContentLoaded', () => {
             csv += `;;;;TOTAL SAIDAS:;${totalOut.toFixed(2).replace('.', ',')}\r\n`;
             csv += `;;;;SALDO:;${(totalIn - totalOut).toFixed(2).replace('.', ',')}\r\n`;
 
-            // 3. Método de Download Alternativo (Data URI)
+            // 3. Método de Download Seguro usando Blob
             try {
-                const encodedUri = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
-                const link = document.createElement("a");
-                const fileName = `livro_caixa_${(profile.propriedade || 'rural').replace(/\s+/g, '_')}.csv`;
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
 
-                link.setAttribute("href", encodedUri);
-                link.setAttribute("download", fileName);
-                document.body.appendChild(link); // Requerido para Firefox/Safari
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `livro_caixa_${(profile.propriedade || 'rural').replace(/\s+/g, '_')}.csv`;
 
-                link.click();
+                document.body.appendChild(a);
+                a.click(); // Dispara o clique
 
-                document.body.removeChild(link);
-                console.log("Download disparado via URI");
+                // Limpeza
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                }, 100);
+
+                console.log("Download disparado via Blob");
             } catch (err) {
                 console.error("Erro no download:", err);
                 alert("Erro ao baixar. Tente usar o Google Chrome se estiver no Safari.");
