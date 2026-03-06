@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão Financeira Rural</title>
+    <meta name="description"
+        content="Web App de Gerenciamento Financeiro Rural. Acompanhe entradas e saídas de sua produção de forma simples.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="auth-screen" class="auth-overlay">
+        <div class="auth-modal">
+            <h2>Bem-vindo ao Gestor Rural</h2>
+            <p>Para começar, como podemos chamar você ou sua propriedade?</p>
+            <form id="auth-form">
+                <div class="form-group">
+                    <input type="text" id="user-name" placeholder="Seu nome ou Nome da Fazenda" required>
+                </div>
+                <button type="submit" class="btn-save">Começar a Gerenciar</button>
+            </form>
+        </div>
+    </div>
+    <div class="app-container">
+        <header>
+            <h1>Gestão Rural</h1>
+        </header>
+
+        <div id="tab-resumo" class="tab-content active">
+            <div class="filter-section"
+                style="text-align: center; margin-bottom: 1.5rem; background: var(--color-card); padding: 1rem; border-radius: var(--border-radius); box-shadow: var(--shadow);">
+                <label for="month-filter" style="font-weight: 600; margin-right: 0.5rem; color: var(--color-text);">Mês
+                    Referência:</label>
+                <select id="month-filter"
+                    style="padding: 0.6rem 1rem; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; font-size: 1rem; outline: none; background: #fafafa; cursor: pointer; margin-right: 1rem;">
+                    <option value="all">Todos os Meses</option>
+                    <option value="0">Janeiro</option>
+                    <option value="1">Fevereiro</option>
+                    <option value="2">Março</option>
+                    <option value="3">Abril</option>
+                    <option value="4">Maio</option>
+                    <option value="5">Junho</option>
+                    <option value="6">Julho</option>
+                    <option value="7">Agosto</option>
+                    <option value="8">Setembro</option>
+                    <option value="9">Outubro</option>
+                    <option value="10">Novembro</option>
+                    <option value="11">Dezembro</option>
+                </select>
+                <label for="year-filter"
+                    style="font-weight: 600; margin-right: 0.5rem; color: var(--color-text);">Ano:</label>
+                <select id="year-filter"
+                    style="padding: 0.6rem 1rem; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; font-size: 1rem; outline: none; background: #fafafa; cursor: pointer;">
+                    <!-- Populated via JS -->
+                </select>
+            </div>
+
+            <div class="dashboard">
+                <div class="card income">
+                    <h2>Entradas</h2>
+                    <div class="amount" id="total-income">R$ 0,00</div>
+                </div>
+                <div class="card expense">
+                    <h2>Saídas</h2>
+                    <div class="amount" id="total-expense">R$ 0,00</div>
+                </div>
+                <div class="card balance">
+                    <h2>Saldo Atual</h2>
+                    <div class="amount" id="total-balance">R$ 0,00</div>
+                    <div id="daily-avg"
+                        style="margin-top: 0.5rem; font-size: 0.95rem; font-weight: 500; font-family: var(--font-family); color: var(--color-text-light);">
+                        Média Diária: R$ 0,00</div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="btn-income" id="btn-new-income">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Nova Entrada
+                </button>
+                <button class="btn-expense" id="btn-new-expense">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Nova Saída
+                </button>
+            </div>
+
+            <div class="tools-section" style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+                <button class="btn-cancel" id="btn-export" style="flex: 1; padding: 0.8rem; font-size: 0.9rem;">
+                    ⬇️ Fazer Backup (Exportar)
+                </button>
+                <button class="btn-cancel" id="btn-import-trigger" style="flex: 1; padding: 0.8rem; font-size: 0.9rem;">
+                    ⬆️ Restaurar (Importar)
+                </button>
+                <input type="file" id="file-input" accept=".json" style="display: none;">
+            </div>
+
+            <div class="pro-report-section"
+                style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow); margin-bottom: 2rem; color: white;">
+                <h3
+                    style="margin-bottom: 0.5rem; font-size: 1.2rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                    Relatório Profissional
+                </h3>
+                <p style="font-size: 0.9rem; margin-bottom: 1rem; opacity: 0.9;">Gere relatórios detalhados contendo
+                    categorias de despesas para envio direto à sua contabilidade ou livro caixa.</p>
+                <button class="btn-pro-export" id="btn-pro-export"
+                    style="width: 100%; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); padding: 1rem; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Exportar para Contador (CSV)
+                </button>
+            </div>
+
+            <div class="transactions-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="margin-bottom: 0;">Transações Recentes</h3>
+                    <div id="filtered-total" style="font-weight: 700; font-size: 1.1rem;"></div>
+                </div>
+                <div class="transactions-list" id="transactions-list">
+                    <!-- Transactions will be injected here -->
+                </div>
+            </div> <!-- end transactions-section -->
+        </div> <!-- end tab-resumo -->
+
+        <div id="tab-entradas" class="tab-content" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="font-size: 1.5rem; color: var(--color-income);">Entradas</h2>
+            </div>
+            <button class="btn-income" id="btn-new-income-tab" style="width: 100%; margin-bottom: 1.5rem;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Nova Entrada
+            </button>
+            <div class="transactions-list" id="transactions-list-entradas"></div>
+        </div>
+
+        <div id="tab-saidas" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="font-size: 1.5rem; color: var(--color-expense);">Saídas</h2>
+            </div>
+            <button class="btn-expense" id="btn-new-expense-tab" style="width: 100%; margin-bottom: 1.5rem;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Nova Saída
+            </button>
+            <div class="transactions-list" id="transactions-list-saidas"></div>
+        </div>
+
+        <div id="tab-perfil" class="tab-content">
+            <h2 style="font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--color-text);">Meu Perfil</h2>
+            <form id="profile-form-inner">
+                <div class="form-group"><label>Nome Completo</label><input type="text" id="prof-nome"></div>
+                <div class="form-group"><label>Nome da Propriedade / Fazenda</label><input type="text"
+                        id="prof-propriedade" required></div>
+                <div class="form-group"><label>CPF / CNPJ Rural</label><input type="text" id="prof-cpf"></div>
+                <div class="form-group"><label>Inscrição Estadual</label><input type="text" id="prof-ie"></div>
+                <div class="form-group"><label>Localização (Cidade/Estado)</label><input type="text" id="prof-local">
+                </div>
+                <div class="form-group"><label>Tipo de Produção (ex: Leiteira, Grãos)</label><input type="text"
+                        id="prof-tipo"></div>
+                <button type="submit" class="btn-save"
+                    style="width: 100%; margin-top: 1rem; padding: 1.2rem; font-size: 1.1rem;">Salvar
+                    Perfil</button>
+            </form>
+            <button id="btn-logout" class="btn-cancel"
+                style="width: 100%; margin-top: 2rem; padding: 1.2rem; background: var(--color-expense); color: white; border: none; font-size: 1.1rem; border-radius: var(--border-radius); font-weight: 600; cursor: pointer;">Sair
+                / Trocar Usuário</button>
+        </div>
+
+    </div> <!-- end app-container -->
+
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active" data-target="tab-resumo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <line x1="9" y1="21" x2="9" y2="9"></line>
+            </svg>
+            <span>Resumo</span>
+        </a>
+        <a href="#" class="nav-item" data-target="tab-entradas">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            <span>Entradas</span>
+        </a>
+        <a href="#" class="nav-item" data-target="tab-saidas">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>Saídas</span>
+        </a>
+        <a href="#" class="nav-item" data-target="tab-perfil">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Perfil</span>
+        </a>
+    </nav>
+
+
+
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <h2 id="modal-title">Nova Transação</h2>
+            <form id="transaction-form">
+                <div class="form-group">
+                    <label for="date-input">Data da Operação</label>
+                    <input type="date" id="date-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="desc">Descrição (ex: Venda de Leite, Compra de Ração)</label>
+                    <input type="text" id="desc" required placeholder="Digite a descrição...">
+                </div>
+                <div class="form-group">
+                    <label for="category">Categoria (Livro Caixa Rural)</label>
+                    <select id="category"
+                        style="width: 100%; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 10px; font-family: inherit; font-size: 1rem; outline: none; background: #fafafa; cursor: pointer;">
+                        <!-- Options injected by JS based on type -->
+                    </select>
+                </div>
+                <div class="form-group" id="liters-group" style="display: none;">
+                    <label for="liters">Quantidade (Litros) - <small>Opcional p/ Vendas</small></label>
+                    <input type="number" id="liters" step="0.01" placeholder="0,00">
+                </div>
+                <div class="form-group">
+                    <label for="amount">Valor (R$)</label>
+                    <input type="number" id="amount" step="0.01" required placeholder="0,00">
+                </div>
+                <div class="form-group">
+                    <label for="receipt-photo">Comprovante (Opcional)</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <input type="file" id="receipt-photo" accept="image/*" capture="environment"
+                            style="padding: 0.5rem; border: 1px dashed #ccc; background: transparent; cursor: pointer;">
+                        <span id="receipt-preview-name"
+                            style="font-size: 0.8rem; color: var(--color-text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;"></span>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" id="btn-cancel">Cancelar</button>
+                    <button type="submit" class="btn-save" id="btn-save">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Receipt Viewer Modal -->
+    <div class="modal-overlay" id="receipt-modal">
+        <div class="modal" style="display: flex; flex-direction: column; align-items: center; padding: 1.5rem;">
+            <h2 id="receipt-modal-title" style="margin-bottom: 1rem; width: 100%; text-align: left;">Comprovante
+            </h2>
+            <div
+                style="width: 100%; display: flex; justify-content: center; background: #eee; border-radius: var(--border-radius); overflow: hidden; margin-bottom: 1.5rem;">
+                <img id="receipt-viewer-img" src="" alt="Comprovante"
+                    style="max-width: 100%; max-height: 50vh; object-fit: contain;">
+            </div>
+            <button type="button" class="btn-cancel" id="btn-close-receipt"
+                style="width: 100%; background: rgb(100, 100, 100); color: white;">Fechar Comprovante</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
