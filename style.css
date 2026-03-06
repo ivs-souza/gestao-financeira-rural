@@ -27,6 +27,18 @@
     padding: 0;
 }
 
+.header-bell {
+    color: var(--color-income);
+}
+
+.dark-mode .header-bell {
+    color: var(--color-text);
+}
+
+.header-bell:hover {
+    opacity: 0.8;
+}
+
 body {
     font-family: var(--font-family);
     background-color: var(--color-bg);
