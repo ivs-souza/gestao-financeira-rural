@@ -108,6 +108,24 @@
                 </select>
             </div>
 
+            <!-- PROJECTION CARD -->
+            <div id="projection-card" class="card projection-card" style="display: none; margin-bottom: 1.5rem;">
+                <h2 id="proj-title" style="font-size: 1.1rem; margin-bottom: 0.8rem; color: var(--color-text);">Previsão
+                    para Próximo Mês</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span style="font-weight: 600; font-size: 0.95rem;">Lucro Estimado:</span>
+                    <span id="proj-profit" style="font-weight: 700; font-size: 1.1rem;">R$ 0,00</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <span style="font-weight: 600; font-size: 0.95rem;">Produção Estimada:</span>
+                    <span id="proj-liters" style="font-weight: 700; font-size: 1.1rem;">0 L</span>
+                </div>
+                <div id="proj-message"
+                    style="font-size: 0.85rem; padding: 0.6rem; border-radius: 6px; text-align: center; font-weight: 500;">
+                    <!-- Aviso dinâmico de tendência -->
+                </div>
+            </div>
+
             <div class="dashboard">
                 <div class="card income">
                     <h2>Entradas</h2>

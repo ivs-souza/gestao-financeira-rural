@@ -21,6 +21,8 @@ const categories = {
 };
 
 let photoBase64 = null;
+let editId = null;
+let transactionToDelete = null;
 
 // Lógica de Inicialização a ser chamada no carregamento
 function initData() {
@@ -349,7 +351,107 @@ const updateDashboard = () => {
 
     // CHAMAR RENDERIZAÇÃO DE GRÁFICOS
     renderCharts(filtered);
+    // CHAMAR MOTOR DE INTELIGÊNCIA PREDITIVA
+    renderProjection();
 };
+
+/* ==========================================================================
+   PREDICTIVE INTELLIGENCE LOGIC
+   ========================================================================== */
+function renderProjection() {
+    try {
+        const projCard = document.getElementById('projection-card');
+        const projTitle = document.getElementById('proj-title');
+        const projProfit = document.getElementById('proj-profit');
+        const projLiters = document.getElementById('proj-liters');
+        const projMessage = document.getElementById('proj-message');
+
+        if (!projCard || transactions.length === 0) return;
+
+        if (!projTitle || !projProfit || !projLiters || !projMessage) {
+            console.warn("renderProjection: Missing DOM elements! Skipping projection render.");
+            return;
+        }
+
+        // Obter mês e ano atual real independente de filtro
+        const today = new Date();
+        const currentMonthReal = today.getMonth();
+        const currentYearReal = today.getFullYear();
+
+        // Calcular data limite 3 meses
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(currentMonthReal - 3);
+
+        // Filtrar dados dos últimos 3 meses até o momento atual
+        const trailingTransactions = transactions.filter(t => {
+            if (!t || !t.date) return false;
+            const tDate = new Date(t.date);
+            return !isNaN(tDate) && tDate >= threeMonthsAgo && tDate <= today;
+        });
+
+        if (trailingTransactions.length === 0) {
+            projCard.style.display = 'none';
+            return;
+        }
+
+        // Agregar Entradas, Saídas e Litros dos últimos 3 meses
+        let sumIncome = 0;
+        let sumExpense = 0;
+        let sumLiters = 0;
+
+        trailingTransactions.forEach(t => {
+            const amt = parseFloat(t.amount) || 0;
+            if (t.type === 'income') {
+                sumIncome += amt;
+                if ((t.category === 'Venda de Produção' || t.category === 'Venda de Leite') && t.liters && parseFloat(t.liters) > 0) {
+                    sumLiters += parseFloat(t.liters);
+                }
+            } else {
+                sumExpense += amt;
+            }
+        });
+
+        // Média de 3 meses
+        const avgProfit = Math.max(0, (sumIncome - sumExpense) / 3);
+        const avgLiters = sumLiters / 3;
+
+        // Calcular o Lucro Líquido apenas do Mês ATUAL
+        let currentMonthIncome = 0;
+        let currentMonthExpense = 0;
+        trailingTransactions.forEach(t => {
+            const tDate = new Date(t.date);
+            if (!isNaN(tDate) && tDate.getMonth() === currentMonthReal && tDate.getFullYear() === currentYearReal) {
+                const amt = parseFloat(t.amount) || 0;
+                if (t.type === 'income') currentMonthIncome += amt;
+                else currentMonthExpense += amt;
+            }
+        });
+        const currentProfit = currentMonthIncome - currentMonthExpense;
+
+        projProfit.textContent = formatCurrency(avgProfit);
+        projLiters.textContent = avgLiters.toFixed(0) + ' L';
+
+        const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        const nextMonthIndex = (currentMonthReal + 1) % 12;
+        projTitle.textContent = `Previsão para ${monthNames[nextMonthIndex]}`;
+
+        projMessage.className = '';
+
+        if (avgProfit < currentProfit) {
+            projMessage.textContent = "Tendência de queda: Revise seus custos de ração 📉";
+            projMessage.style.backgroundColor = 'rgba(255, 0, 0, 0.1)';
+            projMessage.style.color = 'var(--color-expense)';
+        } else {
+            projMessage.textContent = "Parabéns! Sua safra está no caminho para bater a meta! 🏆";
+            projMessage.style.backgroundColor = 'rgba(0, 150, 0, 0.1)';
+            projMessage.style.color = 'var(--color-income)';
+        }
+
+        projCard.style.display = 'block';
+    } catch (e) {
+        console.error("renderProjection Crash: ", e);
+    }
+}
 
 /* ==========================================================================
    CHART.JS LOGIC
