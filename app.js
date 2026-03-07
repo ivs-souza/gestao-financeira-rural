@@ -3,6 +3,7 @@
    ========================================================================== */
 let transactions = [];
 let marketAlerts = [];
+let systemNotifications = [];
 let currentType = '';
 let currentFilter = 'all';
 
@@ -34,6 +35,11 @@ function initData() {
         marketAlerts = JSON.parse(rawAlerts);
     }
 
+    const rawNotifications = localStorage.getItem('rural_notifications');
+    if (rawNotifications) {
+        systemNotifications = JSON.parse(rawNotifications);
+    }
+
     // Theme setup
     const savedTheme = localStorage.getItem('rural_theme');
     if (savedTheme === 'dark') {
@@ -42,6 +48,98 @@ function initData() {
         if (themeBtn) themeBtn.textContent = '☀️';
     }
 }
+
+/* ==========================================================================
+   1.5 SISTEMA DE NOTIFICAÇÕES
+   ========================================================================== */
+window.addNotification = (message, type = 'info') => {
+    const newNotif = {
+        id: Date.now().toString(),
+        message,
+        type,
+        read: false,
+        timestamp: new Date().toISOString()
+    };
+    systemNotifications.unshift(newNotif); // Add to beginning
+    if (systemNotifications.length > 50) systemNotifications.pop(); // Keep max 50
+    localStorage.setItem('rural_notifications', JSON.stringify(systemNotifications));
+    renderSystemNotifications();
+};
+
+window.renderSystemNotifications = () => {
+    const badge = document.getElementById('notification-badge');
+    const list = document.getElementById('notification-list');
+
+    if (!badge || !list) return;
+
+    const unreadCount = systemNotifications.filter(n => !n.read).length;
+
+    if (unreadCount > 0) {
+        badge.style.display = 'block';
+    } else {
+        badge.style.display = 'none';
+    }
+
+    list.innerHTML = '';
+
+    if (systemNotifications.length === 0) {
+        list.innerHTML = '<div style="padding: 16px; text-align: center; color: var(--color-text-light); font-size: 0.9rem;">Nenhuma notificação no momento.</div>';
+        return;
+    }
+
+    systemNotifications.forEach(n => {
+        const item = document.createElement('div');
+        item.className = 'notification-item';
+
+        let iconHtml = '';
+        if (n.type === 'warning' || n.type === 'critical') {
+            iconHtml = '<div class="notification-icon warning"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>';
+        } else if (n.type === 'success') {
+            iconHtml = '<div class="notification-icon success"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg></div>';
+        } else {
+            iconHtml = '<div class="notification-icon" style="background: rgba(100,100,100,0.1); color: var(--color-text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></div>';
+        }
+
+        const date = new Date(n.timestamp);
+        const timeStr = date.toLocaleDateString('pt-BR') + ' às ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+        item.innerHTML = `
+            ${iconHtml}
+            <div class="notification-content">
+                <div class="notification-message" style="${!n.read ? 'font-weight: 600;' : ''}">${n.message}</div>
+                <div class="notification-time">${timeStr}</div>
+            </div>
+        `;
+        list.appendChild(item);
+    });
+};
+
+window.toggleNotificationDropdown = (forceClose = false) => {
+    const dropdown = document.getElementById('notification-dropdown');
+    const badge = document.getElementById('notification-badge');
+    if (!dropdown) return;
+
+    if (forceClose) {
+        dropdown.style.display = 'none';
+        return;
+    }
+
+    if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+        dropdown.style.display = 'flex';
+        // Mark all as read when opening
+        let modified = false;
+        systemNotifications.forEach(n => {
+            if (!n.read) { n.read = true; modified = true; }
+        });
+        if (modified) {
+            localStorage.setItem('rural_notifications', JSON.stringify(systemNotifications));
+            if (badge) badge.style.display = 'none';
+            renderSystemNotifications();
+        }
+    } else {
+        dropdown.style.display = 'none';
+    }
+};
 
 /* ==========================================================================
    2. NAVEGAÇÃO E ABAS
@@ -128,6 +226,14 @@ const updateDashboard = () => {
     if (totalBalanceEl) {
         totalBalanceEl.textContent = formatCurrency(balance);
         totalBalanceEl.style.color = balance < 0 ? 'var(--color-expense)' : 'var(--color-text)';
+
+        if (balance < 0) {
+            const lastNotif = systemNotifications.length > 0 ? systemNotifications[0] : null;
+            // Evitar spam de notificação idêntica
+            if (!lastNotif || lastNotif.message !== 'Atenção: Saldo em Vermelho!') {
+                if (typeof addNotification === 'function') addNotification('Atenção: Saldo em Vermelho!', 'critical');
+            }
+        }
     }
 
     if (filteredTotalEl) {
@@ -138,6 +244,103 @@ const updateDashboard = () => {
     if (dailyAvgEl) {
         const avg = balance / 30;
         dailyAvgEl.textContent = `Média Diária: ${formatCurrency(avg)}`;
+    }
+
+    // PREÇO MÉDIO DE LEITE
+    const milkMetricCard = document.getElementById('milk-metric-card');
+    const avgMilkPriceEl = document.getElementById('avg-milk-price');
+    const milkIncomes = filtered.filter(t => t.type === 'income' && t.category === 'Venda de Leite');
+
+    if (milkMetricCard && avgMilkPriceEl) {
+        if (milkIncomes.length > 0) {
+            milkMetricCard.style.display = 'block';
+            const totalMilkRevenue = milkIncomes.reduce((acc, t) => acc + t.amount, 0);
+            const totalMilkLiters = milkIncomes.reduce((acc, t) => acc + (t.liters || 0), 0);
+
+            let avgPrice = 0;
+            if (totalMilkLiters > 0) {
+                avgPrice = totalMilkRevenue / totalMilkLiters;
+            }
+
+            avgMilkPriceEl.textContent = formatCurrency(avgPrice);
+
+            const savedMilkTarget = localStorage.getItem('rural_milk_target');
+            if (savedMilkTarget) {
+                const target = parseFloat(savedMilkTarget);
+                if (avgPrice < target) {
+                    avgMilkPriceEl.style.color = 'var(--color-expense)';
+                    AvgNotifyThresholdTracker(avgPrice, target);
+                } else {
+                    avgMilkPriceEl.style.color = 'var(--color-income)';
+                }
+            } else {
+                avgMilkPriceEl.style.color = 'var(--color-text)';
+            }
+        } else {
+            milkMetricCard.style.display = 'none';
+        }
+    }
+
+    // Helper p/ Notificação Laticínio
+    function AvgNotifyThresholdTracker(current, target) {
+        const currentMonthKey = `${currentYearFilter}-${currentMonthFilter}`;
+        const notifiedKey = `rural_notifiedMilk_${currentMonthKey}`;
+        let lastNotified = localStorage.getItem(notifiedKey);
+
+        if (lastNotified !== 'true' && typeof addNotification === 'function') {
+            addNotification('Atenção: O preço médio por litro está abaixo da sua meta! 📉', 'warning');
+            localStorage.setItem(notifiedKey, 'true');
+        }
+    }
+
+    // SIMULADOR DE METAS DE SAFRA
+    const goalProgressSection = document.getElementById('goal-progress-section');
+    const goalPercentageText = document.getElementById('goal-percentage');
+    const goalProgressFill = document.getElementById('goal-progress-fill');
+    const goalCurrentText = document.getElementById('goal-current-text');
+    const goalTargetText = document.getElementById('goal-target-text');
+
+    const savedGoalStr = localStorage.getItem('rural_goal');
+    if (savedGoalStr && goalProgressSection) {
+        const goalValue = parseFloat(savedGoalStr);
+        if (goalValue > 0) {
+            goalProgressSection.style.display = 'block';
+            goalCurrentText.textContent = formatCurrency(Math.max(0, balance));
+            goalTargetText.textContent = formatCurrency(goalValue);
+
+            let percentage = (Math.max(0, balance) / goalValue) * 100;
+            if (percentage > 100) percentage = 100;
+
+            goalPercentageText.textContent = percentage.toFixed(0) + '%';
+            goalProgressFill.style.width = percentage + '%';
+
+            // Lógica de Cores da Barra e Notificações
+            const currentMonthKey = `${currentYearFilter}-${currentMonthFilter}`;
+            const notifiedMetaKey = `rural_notifiedMeta_${currentMonthKey}`;
+            let lastNotified = localStorage.getItem(notifiedMetaKey) || '0'; // '0', '50', ou '100'
+
+            if (percentage >= 100) {
+                goalProgressFill.style.background = '#FFD700'; // Dourado
+                goalPercentageText.style.color = '#FFD700';
+
+                if (lastNotified !== '100' && typeof addNotification === 'function') {
+                    addNotification('Meta batida! Sua safra está sendo um sucesso! 🏆', 'success');
+                    localStorage.setItem(notifiedMetaKey, '100');
+                }
+            } else {
+                goalProgressFill.style.background = 'rgb(0, 150, 0)'; // Verde Normal
+                goalPercentageText.style.color = 'var(--color-income)';
+
+                if (percentage >= 50 && lastNotified !== '50' && lastNotified !== '100' && typeof addNotification === 'function') {
+                    addNotification('Parabéns! Você chegou na metade da sua meta de lucro! 📈', 'info');
+                    localStorage.setItem(notifiedMetaKey, '50');
+                }
+            }
+        } else {
+            goalProgressSection.style.display = 'none';
+        }
+    } else if (goalProgressSection) {
+        goalProgressSection.style.display = 'none';
     }
 };
 
@@ -162,8 +365,20 @@ const createTransactionElement = (t) => {
         <span class="transaction-title" style="display:flex; align-items:center;">${t.desc} ${categoryBadge}</span>
         <span class="transaction-date">${safeDate.toLocaleDateString('pt-BR')} ${litersHtml} ${retroHtml} ${receiptHtml}</span>
       </div>
-      <div class="transaction-amount ${t.type}">
-        ${sign} ${formatCurrency(t.amount)}
+      
+      <div style="display: flex; align-items: center; gap: 1rem;">
+          <div class="transaction-amount ${t.type}">
+            ${sign} ${formatCurrency(t.amount)}
+          </div>
+          
+          <div class="transaction-actions" style="display: flex; gap: 0.5rem; opacity: 0.7;">
+              <button onclick="editTransaction(${t.id})" style="background: transparent; border: none; cursor: pointer; color: var(--color-text-light); transition: opacity 0.2s; padding: 4px;" title="Editar">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              </button>
+              <button onclick="deleteTransaction(${t.id})" style="background: transparent; border: none; cursor: pointer; color: rgb(200, 0, 0); transition: opacity 0.2s; padding: 4px;" title="Excluir">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+              </button>
+          </div>
       </div>
     `;
     return item;
@@ -385,6 +600,8 @@ window.loadProfile = () => {
         const profIe = document.getElementById('prof-ie');
         const profLocal = document.getElementById('prof-local');
         const profTipo = document.getElementById('prof-tipo');
+        const profGoal = document.getElementById('prof-goal');
+        const profMilkTarget = document.getElementById('prof-milk-target');
         const headerTitle = document.querySelector('header h1');
 
         if (profileStr) {
@@ -401,6 +618,16 @@ window.loadProfile = () => {
         } else if (oldUser) {
             if (profPropriedade) profPropriedade.value = oldUser;
             if (headerTitle) headerTitle.textContent = `Gestão: ${oldUser}`;
+        }
+
+        const savedGoal = localStorage.getItem('rural_goal');
+        if (savedGoal && profGoal) {
+            profGoal.value = savedGoal;
+        }
+
+        const savedMilkTarget = localStorage.getItem('rural_milk_target');
+        if (savedMilkTarget && profMilkTarget) {
+            profMilkTarget.value = savedMilkTarget;
         }
     } catch (err) {
         console.error("Erro silencioso contido ao carregar perfil:", err);
@@ -472,7 +699,50 @@ const closeModal = () => {
     if (form) form.reset();
     currentType = '';
     photoBase64 = null;
+    editId = null;
     if (receiptPreviewName) receiptPreviewName.textContent = '';
+};
+
+// --- FUNÇÕES DE CRUD EM TEMPO DE EXECUÇÃO ---
+window.deleteTransaction = (id) => {
+    transactionToDelete = id;
+    const modal = document.getElementById('delete-confirm-modal');
+    if (modal) modal.classList.add('active');
+};
+
+window.editTransaction = (id) => {
+    const t = transactions.find(t => t.id === id);
+    if (!t) return;
+
+    // Configura o modal p/ a edição
+    openModal(t.type);
+    editId = id;
+
+    const descInput = document.getElementById('desc');
+    const categoryInput = document.getElementById('category');
+    const amountInput = document.getElementById('amount');
+    const litersInput = document.getElementById('liters');
+    const dateInput = document.getElementById('date-input');
+
+    if (descInput) descInput.value = t.desc || '';
+    if (categoryInput) categoryInput.value = t.category || '';
+    if (amountInput) amountInput.value = t.amount || '';
+    if (litersInput && t.liters) litersInput.value = t.liters;
+
+    // Set date correctly based on timezone/stored format
+    if (dateInput) {
+        const d = new Date(t.date);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        dateInput.value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    if (t.photoData) {
+        photoBase64 = t.photoData;
+        const receiptPreviewName = document.getElementById('receipt-preview-name');
+        if (receiptPreviewName) receiptPreviewName.textContent = '(Comprovante já anexado)';
+    }
 };
 
 window.openReceiptViewer = (id) => {
@@ -581,6 +851,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const profIe = document.getElementById('prof-ie');
             const profLocal = document.getElementById('prof-local');
             const profTipo = document.getElementById('prof-tipo');
+            const profGoal = document.getElementById('prof-goal');
+            const profMilkTarget = document.getElementById('prof-milk-target');
 
             const profile = {
                 nome: profNome ? profNome.value.trim() : '',
@@ -593,6 +865,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             localStorage.setItem('rural_profile', JSON.stringify(profile));
             if (profile.propriedade) localStorage.setItem('rural_user', profile.propriedade);
+
+            if (profGoal && profGoal.value) {
+                localStorage.setItem('rural_goal', profGoal.value);
+            } else {
+                localStorage.removeItem('rural_goal');
+            }
+
+            if (profMilkTarget && profMilkTarget.value) {
+                localStorage.setItem('rural_milk_target', profMilkTarget.value);
+            } else {
+                localStorage.removeItem('rural_milk_target');
+            }
 
             if (headerTitle) headerTitle.textContent = `Fazenda: ${profile.propriedade}`;
             alert('Perfil salvo com sucesso!');
@@ -630,9 +914,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fechar Modal Clicando Fora e ESC
     const modal = document.getElementById('modal');
+    const deleteConfirmModal = document.getElementById('delete-confirm-modal');
+
     if (modal) {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) closeModal();
+        });
+    }
+
+    if (deleteConfirmModal) {
+        deleteConfirmModal.addEventListener('click', (e) => {
+            if (e.target === deleteConfirmModal) deleteConfirmModal.classList.remove('active');
+        });
+    }
+
+    // Botões do Modal de Exclusão
+    const btnCancelDelete = document.getElementById('btn-cancel-delete');
+    const btnConfirmDelete = document.getElementById('btn-confirm-delete');
+
+    if (btnCancelDelete) {
+        btnCancelDelete.addEventListener('click', () => {
+            if (deleteConfirmModal) deleteConfirmModal.classList.remove('active');
+            transactionToDelete = null;
+        });
+    }
+
+    if (btnConfirmDelete) {
+        btnConfirmDelete.addEventListener('click', () => {
+            if (transactionToDelete !== null) {
+                transactions = transactions.filter(t => t.id !== transactionToDelete);
+                try {
+                    localStorage.setItem('rural_data', JSON.stringify(transactions));
+                } catch (err) {
+                    console.error('Erro ao salvar exclusão', err);
+                }
+                updateDashboard();
+                renderTransactions();
+
+                if (typeof addNotification === 'function') {
+                    addNotification('Lançamento excluído com sucesso.', 'info');
+                }
+            }
+            if (deleteConfirmModal) deleteConfirmModal.classList.remove('active');
+            transactionToDelete = null;
         });
     }
 
@@ -702,7 +1026,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const newTransaction = {
-                id: Date.now(),
+                id: editId ? editId : Date.now(),
                 desc,
                 category,
                 amount,
@@ -713,7 +1037,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 photoData: photoBase64
             };
 
-            transactions.push(newTransaction);
+            if (editId) {
+                const index = transactions.findIndex(t => t.id === editId);
+                if (index !== -1) {
+                    transactions[index] = newTransaction;
+                }
+            } else {
+                transactions.push(newTransaction);
+            }
 
             try {
                 localStorage.setItem('rural_data', JSON.stringify(transactions));
@@ -727,6 +1058,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             updateDashboard();
             renderTransactions();
+
+            if (isRetroactive && typeof addNotification === 'function') {
+                addNotification('Lançamento retroativo registrado com sucesso', 'success');
+            }
+
             closeModal();
         });
     }
@@ -968,6 +1304,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target && (e.target.id === 'btn-cancel-alert' || e.target.closest('#btn-cancel-alert'))) {
             toggleAlertModal(false);
             if (alertForm) alertForm.reset();
+        }
+
+        // Notification Center interactions
+        const isBellClicked = e.target.id === 'btn-notifications' || e.target.closest('#btn-notifications');
+        const isDropdownClicked = e.target.closest('#notification-dropdown');
+        const isClearAll = e.target.id === 'btn-clear-notifications';
+
+        if (isBellClicked) {
+            toggleNotificationDropdown();
+        } else if (isClearAll) {
+            systemNotifications = [];
+            localStorage.setItem('rural_notifications', JSON.stringify([]));
+            renderSystemNotifications();
+            toggleNotificationDropdown(true); // close
+        } else if (!isDropdownClicked) {
+            // Click outside
+            toggleNotificationDropdown(true);
         }
     });
 
