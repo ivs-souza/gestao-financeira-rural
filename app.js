@@ -7,6 +7,10 @@ let systemNotifications = [];
 let currentType = '';
 let currentFilter = 'all';
 
+// Referências globais para destruir gráficos anteriores ao re-renderizar
+let expensesChartInstance = null;
+let milkPriceChartInstance = null;
+
 const currentYear = new Date().getFullYear();
 let currentMonthFilter = new Date().getMonth().toString();
 let currentYearFilter = currentYear.toString();
@@ -342,7 +346,192 @@ const updateDashboard = () => {
     } else if (goalProgressSection) {
         goalProgressSection.style.display = 'none';
     }
+
+    // CHAMAR RENDERIZAÇÃO DE GRÁFICOS
+    renderCharts(filtered);
 };
+
+/* ==========================================================================
+   CHART.JS LOGIC
+   ========================================================================== */
+function renderCharts(filteredData) {
+    const chartsContainer = document.getElementById('charts-container');
+    if (!chartsContainer || filteredData.length === 0) {
+        if (chartsContainer) chartsContainer.style.display = 'none';
+        return;
+    }
+
+    chartsContainer.style.display = 'grid'; // Retorna p/ grid em vez de none
+
+    // Coletar cor baseada no tema
+    const isDark = document.body.classList.contains('dark-mode');
+    const textColor = isDark ? '#e0e0e0' : '#666';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+
+    renderExpensesDonut(filteredData, textColor);
+    renderMilkPriceLine(filteredData, textColor, gridColor);
+}
+
+function renderExpensesDonut(filteredData, textColor) {
+    const ctx = document.getElementById('expensesChart');
+    if (!ctx) return;
+
+    if (expensesChartInstance) {
+        expensesChartInstance.destroy();
+    }
+
+    // 1. Agregar despesas por categoria
+    const expenses = filteredData.filter(t => t.type === 'expense');
+
+    if (expenses.length === 0) {
+        // Sem dados suficientes para gráfico
+        ctx.style.display = 'none';
+        return;
+    }
+
+    ctx.style.display = 'block';
+
+    const catTotals = {};
+    expenses.forEach(t => {
+        const cat = t.category || 'Outras';
+        catTotals[cat] = (catTotals[cat] || 0) + parseFloat(t.amount);
+    });
+
+    const labels = Object.keys(catTotals);
+    const data = Object.values(catTotals);
+
+    // Paleta de Cores Dinâmica Padrão Agro
+    const bgColors = [
+        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#E7E9ED'
+    ];
+
+    expensesChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: bgColors.slice(0, labels.length),
+                borderWidth: 2,
+                borderColor: document.body.classList.contains('dark-mode') ? '#1e1e1e' : '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: { color: textColor, font: { size: 11, family: "'Inter', sans-serif" } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            let val = context.parsed;
+                            return ' R$ ' + val.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderMilkPriceLine(filteredData, textColor, gridColor) {
+    const ctx = document.getElementById('milkPriceChart');
+    if (!ctx) return;
+
+    if (milkPriceChartInstance) {
+        milkPriceChartInstance.destroy();
+    }
+
+    // Para evolução, queremos todos os registros de leite independente do mês selecionado
+    // Se o user quiser ver "Todos os meses", mostramos o ano atual inteiro.
+    // Vamos usar a variável global 'transactions' ao invés de 'filteredData' para ver a linha do tempo.
+    const milkSales = transactions.filter(t => {
+        const d = new Date(t.date);
+        return t.type === 'income' && t.category === 'Venda de Leite' && d.getFullYear().toString() === currentYearFilter;
+    });
+
+    if (milkSales.length === 0) {
+        ctx.style.display = 'none';
+        return;
+    }
+
+    ctx.style.display = 'block';
+
+    // Agrupar vendas por mês (0 a 11)
+    const monthlyAgg = {};
+    milkSales.forEach(t => {
+        const d = new Date(t.date);
+        const m = d.getMonth(); // 0 a 11
+        if (!monthlyAgg[m]) {
+            monthlyAgg[m] = { revenue: 0, liters: 0 };
+        }
+        monthlyAgg[m].revenue += parseFloat(t.amount);
+        monthlyAgg[m].liters += parseFloat(t.liters || 0);
+    });
+
+    const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    const labels = [];
+    const prices = [];
+
+    // Ordenar de Janeiro a Dezembro o que tiver
+    const sortedMonths = Object.keys(monthlyAgg).map(Number).sort((a, b) => a - b);
+
+    sortedMonths.forEach(m => {
+        labels.push(monthNames[m]);
+        const agg = monthlyAgg[m];
+        let avg = agg.liters > 0 ? (agg.revenue / agg.liters) : 0;
+        prices.push(avg);
+    });
+
+    milkPriceChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Preço Médio (R$/L)',
+                data: prices,
+                borderColor: '#4BC0C0',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderWidth: 2,
+                pointBackgroundColor: '#4BC0C0',
+                fill: true,
+                tension: 0.3 // curva mais suave
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    grid: { color: gridColor },
+                    ticks: { color: textColor, font: { family: "'Inter', sans-serif" } }
+                },
+                y: {
+                    grid: { color: gridColor },
+                    ticks: {
+                        color: textColor,
+                        font: { family: "'Inter', sans-serif" },
+                        callback: function (value) { return 'R$ ' + value; }
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            let val = context.parsed.y;
+                            return ' R$ ' + val.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
 
 const createTransactionElement = (t) => {
     const item = document.createElement('div');
@@ -983,6 +1172,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('transaction-form');
     if (form) {
         form.addEventListener('submit', (e) => {
+            console.log("Submit event fired on transaction-form");
             e.preventDefault();
 
             let isValid = true;
@@ -992,29 +1182,49 @@ document.addEventListener('DOMContentLoaded', () => {
             const litersInput = document.getElementById('liters');
             const dateInput = document.getElementById('date-input');
 
+            // Reset error borders
+            if (descInput) descInput.style.borderColor = '#ddd';
+            if (amountInput) amountInput.style.borderColor = '#ddd';
+            if (dateInput) dateInput.style.borderColor = '#ddd';
+
             const desc = descInput ? descInput.value.trim() : '';
             const category = categoryInput ? categoryInput.value : '';
-            const amountStr = amountInput ? amountInput.value.replace(',', '.') : '0';
+            const amountStr = amountInput ? amountInput.value.replace('.', '').replace(',', '.') : '0';
             const amount = parseFloat(amountStr);
+
+            console.log("Parsed values:", { desc, category, amountStr, amount });
 
             let liters = null;
             if (currentType === 'income' && litersInput && litersInput.value.trim() !== '') {
-                const litersStr = litersInput.value.replace(',', '.');
+                const litersStr = litersInput.value.replace('.', '').replace(',', '.');
                 liters = parseFloat(litersStr);
             }
 
             if (!desc && descInput) {
                 descInput.style.borderColor = 'var(--color-expense)';
+                console.log("Validation failed: desc is empty");
                 isValid = false;
             }
 
             if ((isNaN(amount) || amount <= 0) && amountInput) {
                 amountInput.style.borderColor = 'var(--color-expense)';
+                console.log("Validation failed: amount is invalid");
                 isValid = false;
             }
 
-            if (!isValid) return;
+            if (!dateInput || !dateInput.value) {
+                if (dateInput) dateInput.style.borderColor = 'var(--color-expense)';
+                console.log("Validation failed: date is empty");
+                isValid = false;
+            }
 
+            if (!isValid) {
+                alert("Por favor, preencha todos os campos obrigatórios (Data, Descrição e Valor).");
+                console.log("Form is invalid, returning...");
+                return;
+            }
+
+            console.log("Form is valid, processing...");
             let selectedDate = new Date();
             let isRetroactive = false;
 

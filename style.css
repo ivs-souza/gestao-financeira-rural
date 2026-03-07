@@ -761,6 +761,29 @@ button {
     color: var(--color-text-light);
 }
 
+/* Charts */
+.charts-container {
+    display: none;
+    /* hidden if no data */
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 2rem;
+}
+
+.chart-card {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 768px) {
+    .charts-container {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* ==========================================================================
    PRINT STYLES (PDF EXPORT)
    ========================================================================== */

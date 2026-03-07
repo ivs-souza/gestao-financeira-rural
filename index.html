@@ -11,6 +11,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -144,6 +147,27 @@
                     style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.8rem; color: var(--color-text-light);">
                     <span id="goal-current-text">R$ 0,00</span>
                     <span id="goal-target-text">R$ 0,00</span>
+                </div>
+            </div>
+
+            <!-- CHARTS SECTION -->
+            <div class="charts-container" id="charts-container"
+                style="display: none; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 2rem;">
+                <!-- Gráfico Donut de Despesas -->
+                <div class="card chart-card">
+                    <h2 style="font-size: 1rem; margin-bottom: 1rem; text-align: center;">Composição de Despesas</h2>
+                    <div style="position: relative; height: 220px; width: 100%;">
+                        <canvas id="expensesChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Linha de Preço de Leite -->
+                <div class="card chart-card">
+                    <h2 style="font-size: 1rem; margin-bottom: 1rem; text-align: center;">Evolução do Preço do Leite
+                    </h2>
+                    <div style="position: relative; height: 220px; width: 100%;">
+                        <canvas id="milkPriceChart"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -357,11 +381,11 @@
             <form id="transaction-form">
                 <div class="form-group">
                     <label for="date-input">Data da Operação</label>
-                    <input type="date" id="date-input" required>
+                    <input type="date" id="date-input">
                 </div>
                 <div class="form-group">
                     <label for="desc">Descrição (ex: Venda de Leite, Compra de Ração)</label>
-                    <input type="text" id="desc" required placeholder="Digite a descrição...">
+                    <input type="text" id="desc" placeholder="Digite a descrição...">
                 </div>
                 <div class="form-group">
                     <label for="category">Categoria (Livro Caixa Rural)</label>
@@ -372,11 +396,11 @@
                 </div>
                 <div class="form-group" id="liters-group" style="display: none;">
                     <label for="liters">Quantidade (Litros) - <small>Opcional p/ Vendas</small></label>
-                    <input type="number" id="liters" step="0.01" placeholder="0,00">
+                    <input type="text" inputmode="decimal" id="liters" placeholder="0,00">
                 </div>
                 <div class="form-group">
                     <label for="amount">Valor (R$)</label>
-                    <input type="number" id="amount" step="0.01" required placeholder="0,00">
+                    <input type="text" inputmode="decimal" id="amount" placeholder="0,00">
                 </div>
                 <div class="form-group">
                     <label for="receipt-photo">Comprovante (Opcional)</label>
