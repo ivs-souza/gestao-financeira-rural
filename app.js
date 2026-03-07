@@ -1218,6 +1218,34 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    const btnPdfReport = document.getElementById('btn-pdf-report');
+    if (btnPdfReport) {
+        btnPdfReport.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            const profileStr = localStorage.getItem('rural_profile');
+            const profile = profileStr ? JSON.parse(profileStr) : {};
+
+            const printPropriedade = document.getElementById('print-propriedade');
+            const printProdutor = document.getElementById('print-produtor');
+            const printIe = document.getElementById('print-ie');
+            const printDate = document.getElementById('print-date');
+
+            if (printPropriedade) printPropriedade.textContent = profile.propriedade || 'Gestão Financeira Rural';
+            if (printProdutor) printProdutor.textContent = `Produtor: ${profile.nome || 'Não informado'}`;
+            if (printIe) printIe.textContent = `IE: ${profile.ie || 'Não informada'}`;
+
+            if (printDate) {
+                const today = new Date();
+                const hh = String(today.getHours()).padStart(2, '0');
+                const mn = String(today.getMinutes()).padStart(2, '0');
+                printDate.textContent = `Emitido em: ${today.toLocaleDateString('pt-BR')} às ${hh}:${mn}`;
+            }
+
+            window.print();
+        });
+    }
+
     window.renderActiveAlerts = () => {
         const list = document.getElementById('active-alerts-list');
         if (!list) return;

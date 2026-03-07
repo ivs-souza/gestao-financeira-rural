@@ -760,3 +760,78 @@ button {
     font-size: 0.7rem;
     color: var(--color-text-light);
 }
+
+/* ==========================================================================
+   PRINT STYLES (PDF EXPORT)
+   ========================================================================== */
+@media print {
+    body {
+        background: white !important;
+        color: black !important;
+    }
+
+    #print-header,
+    #print-footer {
+        display: block !important;
+    }
+
+    nav,
+    header,
+    .actions,
+    .tools-section,
+    .pro-report-section,
+    .btn-remove,
+    .transaction-actions,
+    .filter-section {
+        display: none !important;
+    }
+
+    #dark-mode-toggle,
+    #btn-new-income-tab,
+    #btn-new-expense-tab {
+        display: none !important;
+    }
+
+    .market-alerts-container,
+    #dashboard-active-alerts-section {
+        display: none !important;
+    }
+
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: white !important;
+    }
+
+    .dashboard-cards {
+        gap: 15px;
+        margin-bottom: 2rem;
+    }
+
+    .card {
+        border: 1px solid #ccc;
+        box-shadow: none;
+        page-break-inside: avoid;
+        background: white !important;
+        color: black !important;
+    }
+
+    .transaction-item {
+        page-break-inside: avoid;
+        border: 1px solid #ddd;
+        box-shadow: none;
+        background: white !important;
+        color: black !important;
+    }
+
+    .transaction-amount.income {
+        color: #008000 !important;
+    }
+
+    .transaction-amount.expense {
+        color: #cc0000 !important;
+    }
+}
