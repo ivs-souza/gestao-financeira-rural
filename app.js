@@ -1274,10 +1274,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('transaction-form');
     if (form) {
         form.addEventListener('submit', (e) => {
-            console.log("Submit event fired on transaction-form");
+            // 5 - Validação: e.preventDefault() no início para evitar recarregamento da página
             e.preventDefault();
+            console.log("Submit event fired on transaction-form");
 
             let isValid = true;
+
+            // 1 - Restauração do Form: capturar os campos
             const descInput = document.getElementById('desc');
             const categoryInput = document.getElementById('category');
             const amountInput = document.getElementById('amount');
@@ -1291,14 +1294,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const desc = descInput ? descInput.value.trim() : '';
             const category = categoryInput ? categoryInput.value : '';
-            const amountStr = amountInput ? amountInput.value.replace('.', '').replace(',', '.') : '0';
+            const amountStr = amountInput ? amountInput.value.replace(/\./g, '').replace(',', '.') : '0';
             const amount = parseFloat(amountStr);
 
             console.log("Parsed values:", { desc, category, amountStr, amount });
 
             let liters = null;
             if (currentType === 'income' && litersInput && litersInput.value.trim() !== '') {
-                const litersStr = litersInput.value.replace('.', '').replace(',', '.');
+                const litersStr = litersInput.value.replace(/\./g, '').replace(',', '.');
                 liters = parseFloat(litersStr);
             }
 
@@ -1331,10 +1334,16 @@ document.addEventListener('DOMContentLoaded', () => {
             let isRetroactive = false;
 
             if (dateInput && dateInput.value) {
-                const dateParts = dateInput.value.split('-');
-                selectedDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]), 12, 0, 0);
-                const todayStr = new Date().toISOString().slice(0, 10);
-                isRetroactive = dateInput.value < todayStr;
+                // 3 - Fuso Horário e 1 - Ajuste de Comparação
+                const dateString = dateInput.value.replace(/-/g, '/');
+                selectedDate = new Date(dateString);
+                selectedDate.setHours(0, 0, 0, 0);
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                // 2 - Regra de Alerta: estritamente menor que hoje
+                isRetroactive = selectedDate < today;
             }
 
             const newTransaction = {
@@ -1349,15 +1358,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 photoData: photoBase64
             };
 
+            // 3 - Preservação de Dados: garantir que o localStorage não foi modificado em outra aba e usar push correto
+            try {
+                const storedRaw = localStorage.getItem('rural_data');
+                if (storedRaw) {
+                    const parsed = JSON.parse(storedRaw);
+                    // Re-sync na memória local formatando as datas
+                    transactions = parsed.map(t => ({
+                        ...t,
+                        date: new Date(t.date)
+                    }));
+                }
+            } catch (err) {
+                console.error("Error parsing transactions from local storage before save", err);
+            }
+
+            // 2 - Lógica Dupla (Salvar/Editar): Verificar o editingId (editId)
             if (editId) {
                 const index = transactions.findIndex(t => t.id === editId);
                 if (index !== -1) {
                     transactions[index] = newTransaction;
+                } else {
+                    transactions.push(newTransaction);
                 }
             } else {
                 transactions.push(newTransaction);
             }
 
+            // Salvar no storage
             try {
                 localStorage.setItem('rural_data', JSON.stringify(transactions));
             } catch (err) {
@@ -1365,17 +1393,26 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert('Aviso: Armazenamento do navegador cheio. A imagem não foi salva.');
                     newTransaction.photoData = null;
                     localStorage.setItem('rural_data', JSON.stringify(transactions));
+                } else {
+                    console.error("Error saving transactions to local storage", err);
                 }
             }
 
-            updateDashboard();
+            // 4 - Gatilhos de Atualização
             renderTransactions();
+            updateDashboard(); // Esta função já atira o renderCharts() e renderProjection()
 
             if (isRetroactive && typeof addNotification === 'function') {
                 addNotification('Lançamento retroativo registrado com sucesso', 'success');
             }
 
+            // Finalmente, fechar o form/modal
             closeModal();
+
+            // Só pra garantir o estado zerado para o proximo push
+            editId = null;
+            photoBase64 = null;
+            if (form.reset) form.reset();
         });
     }
 
