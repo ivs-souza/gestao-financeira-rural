@@ -943,3 +943,38 @@ body.dark-mode .simulator-card input[type="range"] {
         color: #cc0000 !important;
     }
 }
+/* Autocomplete List IBGE */
+.autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--color-card);
+    border: 1px solid #ddd;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.autocomplete-list li {
+    padding: 0.8rem 1rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--color-text);
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s;
+}
+
+.autocomplete-list li:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-list li:hover {
+    background: rgba(0, 150, 0, 0.05);
+    color: var(--color-income);
+}

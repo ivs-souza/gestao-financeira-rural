@@ -1,6 +1,17 @@
 /* ==========================================================================
    1. ESTADO GLOBAL E INICIALIZAÇÃO
    ========================================================================== */
+// Immediate welcome check
+(function () {
+    const hasSeenWelcome = localStorage.getItem('hasSeenWelcome') === 'true';
+    if (hasSeenWelcome) {
+        document.addEventListener('DOMContentLoaded', () => {
+            const authScreen = document.getElementById('auth-screen');
+            if (authScreen) authScreen.style.display = 'none';
+        });
+    }
+})();
+
 let transactions = [];
 let marketAlerts = [];
 let systemNotifications = [];
@@ -1426,22 +1437,48 @@ document.addEventListener('DOMContentLoaded', () => {
     const authForm = document.getElementById('auth-form');
     const userNameInput = document.getElementById('user-name');
     const headerTitle = document.querySelector('header h1');
-
     const savedUser = localStorage.getItem('rural_user');
-    if (savedUser && authScreen) {
-        authScreen.style.display = 'none';
-        if (headerTitle) headerTitle.textContent = `Gestão: ${savedUser}`;
+    const hasSeenWelcome = localStorage.getItem('hasSeenWelcome') === 'true';
+
+    if (hasSeenWelcome) {
+        if (authScreen) authScreen.style.display = 'none';
+        if (savedUser && headerTitle) headerTitle.textContent = `Gestão: ${savedUser}`;
+        showPage('tab-resumo');
+    } else {
+        if (authScreen) authScreen.style.display = 'flex';
     }
 
-    if (authForm) {
-        authForm.addEventListener('submit', (e) => {
+    const btnStartManage = document.getElementById('btn-start-manage');
+    if (btnStartManage) {
+        btnStartManage.addEventListener('click', (e) => {
             e.preventDefault();
-            const name = userNameInput ? userNameInput.value.trim() : '';
-            if (name) {
-                localStorage.setItem('rural_user', name);
-                if (headerTitle) headerTitle.textContent = `Gestão: ${name}`;
-                if (authScreen) authScreen.style.display = 'none';
-            }
+            const name = userNameInput ? userNameInput.value.trim() : 'Minha Fazenda';
+
+            // 1- Correção do Submit e SetItem antes de UI change
+            localStorage.setItem('hasSeenWelcome', 'true');
+            localStorage.setItem('rural_user', name);
+
+            // 3- Persistência do Perfil
+            const initialProfile = {
+                nome: '',
+                propriedade: name,
+                cpf: '',
+                ie: '',
+                local: '',
+                tipo: '',
+                segmento: 'Misto' // Atividade inicial
+            };
+            localStorage.setItem('rural_profile', JSON.stringify(initialProfile));
+
+            if (headerTitle) headerTitle.textContent = `Gestão: ${name}`;
+            if (authScreen) authScreen.style.display = 'none';
+
+            // Debug Console
+            console.log('Dados salvos com sucesso, entrando no app...');
+
+            showPage('tab-resumo');
+            updateDashboard();
+            renderTransactions();
         });
     }
 
@@ -1486,6 +1523,76 @@ document.addEventListener('DOMContentLoaded', () => {
             renderTransactions();
         });
     }
+    // Autocomplete IBGE para Cidades  
+    const setupIBGEAutocomplete = () => {
+        const inputLocal = document.getElementById('prof-local');
+        const suggestionsList = document.getElementById('city-suggestions');
+        if (!inputLocal || !suggestionsList) return;
+
+        let ibgeCitiesCache = null;
+
+        // Baixa a lista de cidades ao focar no campo pela primeira vez
+        inputLocal.addEventListener('focus', async () => {
+            if (!ibgeCitiesCache) {
+                try {
+                    const response = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/municipios');
+                    const data = await response.json();
+
+                    // Formata "Nome da Cidade - UF" com tratativa segura para hierarquias ausentes
+                    ibgeCitiesCache = data.map(city => {
+                        let uf = '';
+                        if (city.microrregiao?.mesorregiao?.UF?.sigla) {
+                            uf = city.microrregiao.mesorregiao.UF.sigla;
+                        } else if (city['regiao-imediata']?.['regiao-intermediaria']?.UF?.sigla) {
+                            uf = city['regiao-imediata']['regiao-intermediaria'].UF.sigla;
+                        }
+                        return uf ? `${city.nome} - ${uf}` : city.nome;
+                    });
+                } catch (err) {
+                    console.error("Falha ao buscar cidades do IBGE:", err);
+                }
+            }
+        });
+
+        // Filtra os resultados instantaneamente (local cache) ao digitar
+        inputLocal.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            suggestionsList.innerHTML = '';
+
+            // Só dispara com 3 letras e se o download da API terminou
+            if (!ibgeCitiesCache || val.length < 3) {
+                suggestionsList.style.display = 'none';
+                return;
+            }
+
+            const filtered = ibgeCitiesCache.filter(city => city.toLowerCase().includes(val)).slice(0, 15);
+
+            if (filtered.length === 0) {
+                suggestionsList.style.display = 'none';
+                return;
+            }
+
+            filtered.forEach(city => {
+                const li = document.createElement('li');
+                li.textContent = city;
+                li.addEventListener('click', () => {
+                    inputLocal.value = city;
+                    suggestionsList.style.display = 'none';
+                });
+                suggestionsList.appendChild(li);
+            });
+
+            suggestionsList.style.display = 'block';
+        });
+
+        // Fechar dropdown clicando fora
+        document.addEventListener('click', (e) => {
+            if (e.target !== inputLocal && e.target !== suggestionsList) {
+                suggestionsList.style.display = 'none';
+            }
+        });
+    };
+    setupIBGEAutocomplete();
 
     // Formulário do Perfil
     const profileForm = document.getElementById('profile-form-inner');

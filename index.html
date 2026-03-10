@@ -21,14 +21,17 @@
         <div class="auth-modal">
             <h2>Bem-vindo ao Gestor Rural</h2>
             <p>Para começar, como podemos chamar você ou sua propriedade?</p>
-            <form id="auth-form">
+            <form id="auth-form" onsubmit="return false;">
                 <div class="form-group">
                     <input type="text" id="user-name" placeholder="Seu nome ou Nome da Fazenda" required>
                 </div>
-                <button type="submit" class="btn-save">Começar a Gerenciar</button>
+                <button type="button" class="btn-save" id="btn-start-manage">Começar a Gerenciar</button>
             </form>
         </div>
     </div>
+
+    <!-- Removed inline guarantee script in favor of app.js -->
+
     <div class="app-container">
         <header
             style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; width: 100%; box-sizing: border-box;">
@@ -106,6 +109,23 @@
                     style="padding: 0.6rem 1rem; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; font-size: 1rem; outline: none; background: #fafafa; cursor: pointer;">
                     <!-- Populated via JS -->
                 </select>
+            </div>
+            <div class="actions">
+                <button class="btn-income" id="btn-new-income">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Nova Entrada
+                </button>
+                <button class="btn-expense" id="btn-new-expense">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Nova Saída
+                </button>
             </div>
 
 
@@ -253,23 +273,6 @@
             </div>
             <!-- FIM DA ABA DE MERCADO -->
 
-            <div class="actions">
-                <button class="btn-income" id="btn-new-income">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    Nova Entrada
-                </button>
-                <button class="btn-expense" id="btn-new-expense">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    Nova Saída
-                </button>
-            </div>
 
             <!-- PROJECTION CARD -->
             <div id="projection-card" class="card projection-card" style="display: none; margin-bottom: 1.5rem;">
@@ -412,7 +415,12 @@
                         id="prof-propriedade" required></div>
                 <div class="form-group"><label>CPF / CNPJ Rural</label><input type="text" id="prof-cpf"></div>
                 <div class="form-group"><label>Inscrição Estadual</label><input type="text" id="prof-ie"></div>
-                <div class="form-group"><label>Localização (Cidade/Estado)</label><input type="text" id="prof-local">
+                <div class="form-group">
+                    <label>Localização (Cidade/Estado)</label>
+                    <div style="position: relative;">
+                        <input type="text" id="prof-local" placeholder="Ex: Resende - RJ" autocomplete="off">
+                        <ul id="city-suggestions" class="autocomplete-list" style="display: none;"></ul>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Segmento de Produção Principal</label>
