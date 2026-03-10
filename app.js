@@ -198,8 +198,10 @@ const formatCurrency = (value) => {
     }).format(value);
 };
 
-// Pega transações baseadas no mês e ano selecionados
+// Pega transações baseadas no mês e ano selecionados e Filtro de Segmento (Leite/Pecuária)
 const getFilteredTransactions = () => {
+    const activeModule = localStorage.getItem('rural_active_module') || 'Misto';
+
     return transactions.filter(t => {
         // Garantindo que temos um objeto Date válido antes de checar mês/ano
         const validDate = t.date instanceof Date ? t.date : new Date(t.date);
@@ -210,7 +212,16 @@ const getFilteredTransactions = () => {
         const monthMatch = currentMonthFilter === 'all' ? true : tMonth === currentMonthFilter;
         const yearMatch = tYear === currentYearFilter;
 
-        return monthMatch && yearMatch;
+        // Logical rule: 'Leite' is default for old transactions without activity tag
+        let activityMatch = true;
+
+        if (activeModule === 'Leite') {
+            activityMatch = (t.activity === 'leite' || !t.activity);
+        } else if (activeModule === 'Corte') {
+            activityMatch = (t.activity === 'pecuaria');
+        }
+
+        return monthMatch && yearMatch && activityMatch;
     });
 };
 
@@ -1128,25 +1139,27 @@ const openModal = (type) => {
             modalTitle.textContent = 'Nova Entrada';
             modalTitle.style.color = 'var(--color-income)';
         }
-        if (litersGroup) litersGroup.style.display = (contextSegment === 'Leite' || contextSegment === 'Misto') ? 'block' : 'none';
     } else {
         if (modalTitle) {
             modalTitle.textContent = 'Nova Saída';
             modalTitle.style.color = 'var(--color-expense)';
         }
-        if (litersGroup) {
-            litersGroup.style.display = 'none';
-            if (litersInput) litersInput.value = '';
+    }
+
+    const tSegLeite = document.getElementById('t_seg_leite');
+    const tSegCorte = document.getElementById('t_seg_corte');
+
+    if (tSegLeite && tSegCorte) {
+        if (contextSegment === 'Corte') {
+            tSegCorte.checked = true;
+        } else {
+            tSegLeite.checked = true;
         }
     }
 
-    if (headsGroup) {
-        if (contextSegment === 'Corte' || contextSegment === 'Misto') {
-            headsGroup.style.display = 'block';
-        } else {
-            headsGroup.style.display = 'none';
-            if (headsInput) headsInput.value = '';
-        }
+    // Trigger visual update for Liters/Heads fields
+    if (typeof window.updateModalInputs === 'function') {
+        window.updateModalInputs();
     }
 
     if (modal) modal.classList.add('active');
@@ -1191,6 +1204,24 @@ window.editTransaction = (id) => {
     if (categoryInput) categoryInput.value = t.category || '';
     if (amountInput) amountInput.value = t.amount || '';
     if (litersInput && t.liters) litersInput.value = t.liters;
+
+    // Sync Atividade Segment Toggle for Editing
+    const tSegLeite = document.getElementById('t_seg_leite');
+    const tSegCorte = document.getElementById('t_seg_corte');
+    const headsInput = document.getElementById('heads');
+
+    if (tSegLeite && tSegCorte) {
+        if (t.activity === 'pecuaria') {
+            tSegCorte.checked = true;
+        } else {
+            tSegLeite.checked = true;
+        }
+        if (typeof window.updateModalInputs === 'function') {
+            window.updateModalInputs();
+        }
+    }
+
+    if (headsInput && t.heads) headsInput.value = t.heads;
 
     // Set date correctly based on timezone/stored format
     if (dateInput) {
@@ -1522,6 +1553,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     isRetroactive = selectedDate < today;
                 }
 
+                const headsInput = document.getElementById('heads');
+                const heads = (headsInput && headsInput.value.trim() !== '') ? headsInput.value.trim() : null;
+
+                const tSegCorteRadio = document.getElementById('t_seg_corte');
+                const activityVal = (tSegCorteRadio && tSegCorteRadio.checked) ? 'pecuaria' : 'leite';
+
                 const newTransaction = {
                     id: editId ? editId : Date.now(),
                     desc,
@@ -1530,6 +1567,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     type: currentType,
                     date: selectedDate,
                     liters: liters,
+                    heads: heads,
+                    activity: activityVal,
                     retroactive: isRetroactive,
                     photoData: photoBase64
                 };
@@ -1949,5 +1988,40 @@ document.addEventListener('DOMContentLoaded', () => {
             renderTransactions();
         });
     }
+
+    // Modal Segment Toggles Listener
+    const tSegLeiteRadio = document.getElementById('t_seg_leite');
+    const tSegCorteRadio = document.getElementById('t_seg_corte');
+
+    window.updateModalInputs = () => {
+        const litersGroup = document.getElementById('liters-group');
+        const headsGroup = document.getElementById('heads-group');
+        const litersInput = document.getElementById('liters');
+        const headsInput = document.getElementById('heads');
+
+        // Check which radio is active (default Leite if none)
+        const activeSeg = (tSegCorteRadio && tSegCorteRadio.checked) ? 'Corte' : 'Leite';
+
+        if (currentType === 'income') {
+            if (litersGroup) litersGroup.style.display = (activeSeg === 'Leite') ? 'block' : 'none';
+        } else {
+            if (litersGroup) {
+                litersGroup.style.display = 'none';
+                if (litersInput) litersInput.value = '';
+            }
+        }
+
+        if (headsGroup) {
+            if (activeSeg === 'Corte') {
+                headsGroup.style.display = 'block';
+            } else {
+                headsGroup.style.display = 'none';
+                if (headsInput) headsInput.value = '';
+            }
+        }
+    };
+
+    if (tSegLeiteRadio) tSegLeiteRadio.addEventListener('change', window.updateModalInputs);
+    if (tSegCorteRadio) tSegCorteRadio.addEventListener('change', window.updateModalInputs);
 
 });
