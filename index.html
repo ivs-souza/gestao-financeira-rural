@@ -85,29 +85,14 @@
         <div id="tab-resumo" class="tab-content active">
             <div class="filter-section"
                 style="text-align: center; margin-bottom: 1.5rem; background: var(--color-card); padding: 1rem; border-radius: var(--border-radius); box-shadow: var(--shadow);">
-                <label for="month-filter" style="font-weight: 600; margin-right: 0.5rem; color: var(--color-text);">Mês
-                    Referência:</label>
-                <select id="month-filter"
-                    style="padding: 0.6rem 1rem; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; font-size: 1rem; outline: none; background: #fafafa; cursor: pointer; margin-right: 1rem;">
-                    <option value="all">Todos os Meses</option>
-                    <option value="0">Janeiro</option>
-                    <option value="1">Fevereiro</option>
-                    <option value="2">Março</option>
-                    <option value="3">Abril</option>
-                    <option value="4">Maio</option>
-                    <option value="5">Junho</option>
-                    <option value="6">Julho</option>
-                    <option value="7">Agosto</option>
-                    <option value="8">Setembro</option>
-                    <option value="9">Outubro</option>
-                    <option value="10">Novembro</option>
-                    <option value="11">Dezembro</option>
-                </select>
-                <label for="year-filter"
-                    style="font-weight: 600; margin-right: 0.5rem; color: var(--color-text);">Ano:</label>
-                <select id="year-filter"
+                <label for="time-filter"
+                    style="font-weight: 600; margin-right: 0.5rem; color: var(--color-text);">Período:</label>
+                <select id="time-filter"
                     style="padding: 0.6rem 1rem; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; font-size: 1rem; outline: none; background: #fafafa; cursor: pointer;">
-                    <!-- Populated via JS -->
+                    <option value="this_month">Este Mês</option>
+                    <option value="last_3_months">Últimos 3 Meses</option>
+                    <option value="this_year">Este Ano</option>
+                    <option value="all">Tudo</option>
                 </select>
             </div>
             <div class="actions">

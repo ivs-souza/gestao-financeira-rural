@@ -24,8 +24,7 @@ let milkPriceChartInstance = null;
 let simulatorChartInstance = null;
 
 const currentYear = new Date().getFullYear();
-let currentMonthFilter = new Date().getMonth().toString();
-let currentYearFilter = currentYear.toString();
+let currentTimeFilter = 'this_month';
 
 const categories = {
     income: ['Venda de Produção', 'Venda de Animais', 'Outras Receitas'],
@@ -209,20 +208,43 @@ const formatCurrency = (value) => {
     }).format(value);
 };
 
+// Filtra transações por data
+const filterTransactionsByDate = (txs) => {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYearStr = currentYear.toString();
+
+    return txs.filter(t => {
+        const validDate = t.date instanceof Date ? t.date : new Date(t.date);
+
+        if (isNaN(validDate.getTime())) {
+            return currentTimeFilter === 'all';
+        }
+
+        const tMonth = validDate.getMonth();
+        const tYear = validDate.getFullYear().toString();
+
+        if (currentTimeFilter === 'this_month') {
+            return tMonth === currentMonth && tYear === currentYearStr;
+        } else if (currentTimeFilter === 'this_year') {
+            return tYear === currentYearStr;
+        } else if (currentTimeFilter === 'last_3_months') {
+            const threeMonthsAgo = new Date();
+            threeMonthsAgo.setMonth(currentMonth - 3);
+            return validDate >= threeMonthsAgo && validDate <= today;
+        } else {
+            return true;
+        }
+    });
+};
+
 // Pega transações baseadas no mês e ano selecionados e Filtro de Segmento (Leite/Pecuária)
 const getFilteredTransactions = () => {
     const activeModule = localStorage.getItem('rural_active_module') || 'Misto';
 
-    return transactions.filter(t => {
-        // Garantindo que temos um objeto Date válido antes de checar mês/ano
-        const validDate = t.date instanceof Date ? t.date : new Date(t.date);
+    const dateFiltered = filterTransactionsByDate(transactions);
 
-        const tMonth = validDate.getMonth().toString();
-        const tYear = validDate.getFullYear().toString();
-
-        const monthMatch = currentMonthFilter === 'all' ? true : tMonth === currentMonthFilter;
-        const yearMatch = tYear === currentYearFilter;
-
+    return dateFiltered.filter(t => {
         // Logical rule: 'Leite' is default for old transactions without activity tag
         let activityMatch = true;
 
@@ -232,7 +254,7 @@ const getFilteredTransactions = () => {
             activityMatch = (t.activity === 'pecuaria');
         }
 
-        return monthMatch && yearMatch && activityMatch;
+        return activityMatch;
     });
 };
 
@@ -254,7 +276,16 @@ const updateDashboard = () => {
 
     if (totalBalanceEl) {
         totalBalanceEl.textContent = formatCurrency(balance);
-        totalBalanceEl.style.color = balance < 0 ? 'var(--color-expense)' : 'var(--color-text)';
+        totalBalanceEl.style.color = 'white'; // Always white since background is colored
+
+        const balanceCard = totalBalanceEl.closest('.card');
+        if (balanceCard) {
+            if (balance < 0) {
+                balanceCard.style.background = 'linear-gradient(135deg, var(--color-expense) 0%, #c62828 100%)';
+            } else {
+                balanceCard.style.background = 'linear-gradient(135deg, var(--color-income) 0%, #2e7d32 100%)';
+            }
+        }
 
         if (balance < 0) {
             const lastNotif = systemNotifications.length > 0 ? systemNotifications[0] : null;
@@ -294,11 +325,19 @@ const updateDashboard = () => {
     }
 
     if (dailyAvgEl) {
-        let daysInMonth = new Date(currentYearFilter, parseInt(currentMonthFilter) + 1, 0).getDate();
-        if (currentMonthFilter === 'all') daysInMonth = 365;
+        let daysInPeriod = 30; // default approximation
+        if (currentTimeFilter === 'this_month') {
+            daysInPeriod = new Date(currentYear, new Date().getMonth() + 1, 0).getDate();
+        } else if (currentTimeFilter === 'this_year') {
+            const startOfYear = new Date(currentYear, 0, 1);
+            daysInPeriod = Math.floor((new Date() - startOfYear) / (1000 * 60 * 60 * 24)) || 1;
+        } else if (currentTimeFilter === 'last_3_months') {
+            daysInPeriod = 90;
+        } else {
+            daysInPeriod = 365;
+        }
 
-        // Add 1 to avoid division by zero if it's the very first day of the month/year somehow, though getDate returns >=1
-        const avg = balance / daysInMonth;
+        const avg = balance / daysInPeriod;
         dailyAvgEl.textContent = `Média Diária: ${formatCurrency(avg)}`;
         dailyAvgEl.style.color = avg < 0 ? 'var(--color-expense)' : 'var(--color-text-light)';
     }
@@ -340,7 +379,7 @@ const updateDashboard = () => {
 
     // Helper p/ Notificação Laticínio
     function AvgNotifyThresholdTracker(current, target) {
-        const currentMonthKey = `${currentYearFilter}-${currentMonthFilter}`;
+        const currentMonthKey = `${currentYear}-${new Date().getMonth()}`;
         const notifiedKey = `rural_notifiedMilk_${currentMonthKey}`;
         let lastNotified = localStorage.getItem(notifiedKey);
 
@@ -372,7 +411,7 @@ const updateDashboard = () => {
             goalProgressFill.style.width = percentage + '%';
 
             // Lógica de Cores da Barra e Notificações
-            const currentMonthKey = `${currentYearFilter}-${currentMonthFilter}`;
+            const currentMonthKey = `${currentYear}-${new Date().getMonth()}`;
             const notifiedMetaKey = `rural_notifiedMeta_${currentMonthKey}`;
             let lastNotified = localStorage.getItem(notifiedMetaKey) || '0'; // '0', '50', ou '100'
 
@@ -818,7 +857,7 @@ function renderMilkPriceLine(filteredData, textColor, gridColor) {
     // Vamos usar a variável global 'transactions' ao invés de 'filteredData' para ver a linha do tempo.
     const milkSales = transactions.filter(t => {
         const d = new Date(t.date);
-        return t.type === 'income' && t.category === 'Venda de Leite' && d.getFullYear().toString() === currentYearFilter;
+        return t.type === 'income' && t.category === 'Venda de Leite' && d.getFullYear() === currentYear;
     });
 
     if (milkSales.length === 0) {
@@ -1494,31 +1533,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Filtros de Ano (popular dinâmico)
-    const yearFilterEl = document.getElementById('year-filter');
-    const monthFilterEl = document.getElementById('month-filter');
+    // Filtro de Tempo (Período)
+    const timeFilterEl = document.getElementById('time-filter');
 
-    if (yearFilterEl) {
-        let startYear = currentYear - 5;
-        for (let y = startYear; y <= currentYear + 1; y++) {
-            const opt = document.createElement('option');
-            opt.value = y;
-            opt.textContent = y;
-            if (y === currentYear) opt.selected = true;
-            yearFilterEl.appendChild(opt);
-        }
-
-        yearFilterEl.addEventListener('change', (e) => {
-            currentYearFilter = e.target.value;
-            updateDashboard();
-            renderTransactions();
-        });
-    }
-
-    if (monthFilterEl) {
-        monthFilterEl.value = currentMonthFilter;
-        monthFilterEl.addEventListener('change', (e) => {
-            currentMonthFilter = e.target.value;
+    if (timeFilterEl) {
+        timeFilterEl.value = currentTimeFilter;
+        timeFilterEl.addEventListener('change', (e) => {
+            currentTimeFilter = e.target.value;
             updateDashboard();
             renderTransactions();
         });
