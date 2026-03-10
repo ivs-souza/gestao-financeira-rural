@@ -126,25 +126,64 @@
                 </div>
             </div>
 
+            <!-- SIMULATOR CARD -->
+            <div id="simulator-card" class="card simulator-card" style="margin-bottom: 1.5rem;">
+                <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--color-text); text-align: center;">
+                    Simulador de Impacto</h2>
+
+                <div class="slider-group" style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.9rem; font-weight: 500;">Variação Preço do Leite (R$/L)</span>
+                        <span id="sim-milk-label"
+                            style="font-size: 0.9rem; font-weight: 600; color: var(--color-income);">+ R$ 0,00</span>
+                    </div>
+                    <input type="range" id="sim-milk-range" min="-1.00" max="1.00" step="0.05" value="0"
+                        style="width: 100%;">
+                </div>
+
+                <div class="slider-group" style="margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.9rem; font-weight: 500;">Variação Custo de Produção (%)</span>
+                        <span id="sim-cost-label"
+                            style="font-size: 0.9rem; font-weight: 600; color: var(--color-expense);">0%</span>
+                    </div>
+                    <input type="range" id="sim-cost-range" min="-50" max="50" step="1" value="0" style="width: 100%;">
+                </div>
+
+                <div style="width: 100%; height: 200px; position: relative;">
+                    <canvas id="simulatorChart"></canvas>
+                </div>
+            </div>
+
+
+
             <div class="dashboard">
                 <div class="card income">
-                    <h2>Entradas</h2>
+                    <h2>Entradas Totais</h2>
                     <div class="amount" id="total-income">R$ 0,00</div>
                 </div>
                 <div class="card expense">
-                    <h2>Saídas</h2>
+                    <h2>Saídas Totais</h2>
                     <div class="amount" id="total-expense">R$ 0,00</div>
                 </div>
-                <div class="card balance">
+                <div class="card balance" style="grid-column: span 2;">
                     <h2>Saldo Atual</h2>
                     <div class="amount" id="total-balance">R$ 0,00</div>
-                    <div id="daily-avg"
-                        style="margin-top: 0.5rem; font-size: 0.95rem; font-weight: 500; font-family: var(--font-family); color: var(--color-text-light);">
-                        Média Diária: R$ 0,00</div>
                 </div>
-                <div class="card metrics" style="grid-column: span 2; display: none;" id="milk-metric-card">
-                    <h2>Preço Médio Recebido (L/R$)</h2>
-                    <div class="amount" id="avg-milk-price">R$ 0,00</div>
+            </div>
+
+            <!-- ACESSO RÁPIDO AOS MÓDULOS -->
+            <div id="active-modules"
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 2rem;">
+                <div class="card" id="module-leite-btn"
+                    style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border: 2px solid #e0e0e0; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem;">
+                    <span style="font-size: 3rem; display: block; margin-bottom: 0.8rem;">🐄</span>
+                    <h3 style="color: #333; margin: 0; font-size: 1.1rem;">Módulo Leite</h3>
+                </div>
+                <div class="card" id="module-corte-btn"
+                    style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border: 2px solid #e0e0e0; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem;">
+                    <span style="font-size: 3rem; display: block; margin-bottom: 0.8rem;">🥩</span>
+                    <h3 style="color: #333; margin: 0; font-size: 1.1rem;">Pecuária e Corte</h3>
                 </div>
             </div>
 
@@ -338,8 +377,15 @@
                 <div class="form-group"><label>Inscrição Estadual</label><input type="text" id="prof-ie"></div>
                 <div class="form-group"><label>Localização (Cidade/Estado)</label><input type="text" id="prof-local">
                 </div>
-                <div class="form-group"><label>Tipo de Produção (ex: Leiteira, Grãos)</label><input type="text"
-                        id="prof-tipo"></div>
+                <div class="form-group">
+                    <label>Segmento de Produção Principal</label>
+                    <select id="prof-segmento"
+                        style="width: 100%; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 10px; font-family: inherit; font-size: 1rem; outline: none; background: #fafafa; cursor: pointer;">
+                        <option value="Misto">Misto (Leite e Pecuária)</option>
+                        <option value="Leite">Apenas Atividade Leiteira</option>
+                        <option value="Corte">Apenas Pecuária de Corte</option>
+                    </select>
+                </div>
                 <div class="form-group"><label>Preço Alvo por Litro (R$)</label><input type="number"
                         id="prof-milk-target" step="0.01" placeholder="Ex: 2.50"></div>
                 <div class="form-group"><label>Meta de Lucro Mensal (R$)</label><input type="number" id="prof-goal"
@@ -413,9 +459,14 @@
                     </select>
                 </div>
                 <div class="form-group" id="liters-group" style="display: none;">
-                    <label for="liters">Quantidade (Litros) - <small>Opcional p/ Vendas</small></label>
+                    <label for="liters">Quantidade (Litros) - <small>Módulo Leite</small></label>
                     <input type="text" inputmode="decimal" id="liters" placeholder="0,00">
                 </div>
+                <div class="form-group" id="heads-group" style="display: none;">
+                    <label for="heads">Cabeças / Peso - <small>Módulo Pecuária</small></label>
+                    <input type="text" id="heads" placeholder="Ex: 5 cab. ou 1500 kg">
+                </div>
+
                 <div class="form-group">
                     <label for="amount">Valor (R$)</label>
                     <input type="text" inputmode="decimal" id="amount" placeholder="0,00">

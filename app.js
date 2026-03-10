@@ -10,6 +10,7 @@ let currentFilter = 'all';
 // Referências globais para destruir gráficos anteriores ao re-renderizar
 let expensesChartInstance = null;
 let milkPriceChartInstance = null;
+let simulatorChartInstance = null;
 
 const currentYear = new Date().getFullYear();
 let currentMonthFilter = new Date().getMonth().toString();
@@ -17,7 +18,7 @@ let currentYearFilter = currentYear.toString();
 
 const categories = {
     income: ['Venda de Produção', 'Venda de Animais', 'Outras Receitas'],
-    expense: ['Insumos', 'Mão de Obra', 'Manutenção', 'Combustível', 'Medicamentos/Nutrição', 'Impostos', 'Outras Despesas']
+    expense: ['Ração', 'Mão de Obra', 'Manutenção', 'Combustível', 'Medicamentos/Nutrição', 'Impostos', 'Outras Despesas']
 };
 
 let photoBase64 = null;
@@ -248,8 +249,13 @@ const updateDashboard = () => {
     }
 
     if (dailyAvgEl) {
-        const avg = balance / 30;
+        let daysInMonth = new Date(currentYearFilter, parseInt(currentMonthFilter) + 1, 0).getDate();
+        if (currentMonthFilter === 'all') daysInMonth = 365;
+
+        // Add 1 to avoid division by zero if it's the very first day of the month/year somehow, though getDate returns >=1
+        const avg = balance / daysInMonth;
         dailyAvgEl.textContent = `Média Diária: ${formatCurrency(avg)}`;
+        dailyAvgEl.style.color = avg < 0 ? 'var(--color-expense)' : 'var(--color-text-light)';
     }
 
     // PREÇO MÉDIO DE LEITE
@@ -351,7 +357,7 @@ const updateDashboard = () => {
 
     // CHAMAR RENDERIZAÇÃO DE GRÁFICOS
     renderCharts(filtered);
-    // CHAMAR MOTOR DE INTELIGÊNCIA PREDITIVA
+    renderMarket(filtered);
     renderProjection();
 };
 
@@ -454,6 +460,140 @@ function renderProjection() {
 }
 
 /* ==========================================================================
+   IMPACT SIMULATOR LOGIC
+   ========================================================================== */
+function renderSimulator(filteredData) {
+    const simCard = document.getElementById('simulator-card');
+    const milkRange = document.getElementById('sim-milk-range');
+    const costRange = document.getElementById('sim-cost-range');
+    const milkLabel = document.getElementById('sim-milk-label');
+    const costLabel = document.getElementById('sim-cost-label');
+    const ctx = document.getElementById('simulatorChart');
+
+    if (!simCard || !milkRange || !costRange || !ctx) return;
+
+    if (filteredData.length === 0) {
+        simCard.style.display = 'none';
+        return;
+    }
+    simCard.style.display = 'block';
+
+    const deltaMilkPrice = parseFloat(milkRange.value) || 0;
+    const deltaCostPercent = parseFloat(costRange.value) || 0;
+
+    milkLabel.textContent = (deltaMilkPrice >= 0 ? '+ ' : '- ') + formatCurrency(Math.abs(deltaMilkPrice)) + '/L';
+    milkLabel.style.color = deltaMilkPrice >= 0 ? 'var(--color-income)' : 'var(--color-expense)';
+
+    costLabel.textContent = (deltaCostPercent >= 0 ? '+ ' : '- ') + Math.abs(deltaCostPercent) + '%';
+    costLabel.style.color = deltaCostPercent <= 0 ? 'var(--color-income)' : 'var(--color-expense)';
+
+    let baseIncomeOthers = 0;
+    let baseLiters = 0;
+    let baseMilkRevenue = 0;
+    let baseExpense = 0;
+
+    filteredData.forEach(t => {
+        const amt = parseFloat(t.amount) || 0;
+        if (t.type === 'income') {
+            if ((t.category === 'Venda de Produção' || t.category === 'Venda de Leite') && t.liters && parseFloat(t.liters) > 0) {
+                baseLiters += parseFloat(t.liters);
+                baseMilkRevenue += amt;
+            } else {
+                baseIncomeOthers += amt;
+            }
+        } else {
+            baseExpense += amt;
+        }
+    });
+
+    const currentProfit = (baseIncomeOthers + baseMilkRevenue) - baseExpense;
+
+    const baseMilkPrice = baseLiters > 0 ? (baseMilkRevenue / baseLiters) : 0;
+    const newMilkPrice = Math.max(0, baseMilkPrice + deltaMilkPrice);
+    const simulatedMilkRevenue = baseLiters * newMilkPrice;
+
+    const simulatedExpense = baseExpense * (1 + (deltaCostPercent / 100));
+    const simulatedProfit = (baseIncomeOthers + simulatedMilkRevenue) - simulatedExpense;
+
+    const isDark = document.body.classList.contains('dark-mode');
+    const textColor = isDark ? '#e0e0e0' : '#666';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+
+    if (simulatorChartInstance) {
+        simulatorChartInstance.destroy();
+    }
+
+    simulatorChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Cenário Atual', 'Cenário Simulado'],
+            datasets: [{
+                label: 'Lucro Líquido (R$)',
+                data: [currentProfit, simulatedProfit],
+                backgroundColor: [
+                    currentProfit >= 0 ? 'rgba(0, 150, 0, 0.6)' : 'rgba(200, 0, 0, 0.6)',
+                    simulatedProfit >= 0 ? 'rgba(0, 150, 0, 0.9)' : 'rgba(200, 0, 0, 0.9)'
+                ],
+                borderColor: [
+                    currentProfit >= 0 ? 'rgba(0, 150, 0, 1)' : 'rgba(200, 0, 0, 1)',
+                    simulatedProfit >= 0 ? 'rgba(0, 150, 0, 1)' : 'rgba(200, 0, 0, 1)'
+                ],
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return formatCurrency(context.raw);
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: gridColor },
+                    ticks: {
+                        color: textColor,
+                        callback: function (value) {
+                            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(value);
+                        }
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: textColor, font: { weight: 'bold' } }
+                }
+            }
+        }
+    });
+}
+
+// Escutar sliders globals para recalcular na hora
+document.addEventListener('DOMContentLoaded', () => {
+    const milkRange = document.getElementById('sim-milk-range');
+    const costRange = document.getElementById('sim-cost-range');
+
+    if (milkRange) {
+        milkRange.addEventListener('input', () => {
+            renderSimulator(getFilteredTransactions());
+        });
+    }
+
+    if (costRange) {
+        costRange.addEventListener('input', () => {
+            renderSimulator(getFilteredTransactions());
+        });
+    }
+});
+
+/* ==========================================================================
    CHART.JS LOGIC
    ========================================================================== */
 function renderCharts(filteredData) {
@@ -535,7 +675,7 @@ function renderExpensesDonut(filteredData, textColor) {
                     }
                 }
             }
-        }
+        } // end options
     });
 }
 
@@ -891,6 +1031,7 @@ window.loadProfile = () => {
         const profIe = document.getElementById('prof-ie');
         const profLocal = document.getElementById('prof-local');
         const profTipo = document.getElementById('prof-tipo');
+        const profSegmento = document.getElementById('prof-segmento');
         const profGoal = document.getElementById('prof-goal');
         const profMilkTarget = document.getElementById('prof-milk-target');
         const headerTitle = document.querySelector('header h1');
@@ -906,6 +1047,15 @@ window.loadProfile = () => {
             if (profIe && profile.ie !== undefined) profIe.value = profile.ie;
             if (profLocal && profile.local !== undefined) profLocal.value = profile.local;
             if (profTipo && profile.tipo !== undefined) profTipo.value = profile.tipo;
+            if (profSegmento && profile.segmento !== undefined) profSegmento.value = profile.segmento;
+
+            // Toggle Segment Buttons in Dashboard depending on Profile
+            const btnLeite = document.getElementById('module-leite-btn');
+            const btnCorte = document.getElementById('module-corte-btn');
+            const seg = profile.segmento || 'Misto';
+            if (btnLeite) btnLeite.style.display = (seg === 'Misto' || seg === 'Leite') ? 'flex' : 'none';
+            if (btnCorte) btnCorte.style.display = (seg === 'Misto' || seg === 'Corte') ? 'flex' : 'none';
+
         } else if (oldUser) {
             if (profPropriedade) profPropriedade.value = oldUser;
             if (headerTitle) headerTitle.textContent = `Gestão: ${oldUser}`;
@@ -938,8 +1088,21 @@ const openModal = (type) => {
     const modalTitle = document.getElementById('modal-title');
     const litersGroup = document.getElementById('liters-group');
     const litersInput = document.getElementById('liters');
+    const headsGroup = document.getElementById('heads-group');
+    const headsInput = document.getElementById('heads');
     const modal = document.getElementById('modal');
     const descInput = document.getElementById('desc');
+
+    let currentSegment = 'Misto';
+    const rawProfile = localStorage.getItem('rural_profile');
+    if (rawProfile) {
+        const profile = JSON.parse(rawProfile);
+        if (profile.segmento) currentSegment = profile.segmento;
+    }
+    const currentActiveModule = localStorage.getItem('rural_active_module') || 'Misto';
+
+    // Evaluate active context (if module is specifically selected, that rules, else profile rules)
+    const contextSegment = currentActiveModule !== 'Misto' ? currentActiveModule : currentSegment;
 
     if (receiptPhotoInput) receiptPhotoInput.value = '';
     if (receiptPreviewName) receiptPreviewName.textContent = '';
@@ -965,7 +1128,7 @@ const openModal = (type) => {
             modalTitle.textContent = 'Nova Entrada';
             modalTitle.style.color = 'var(--color-income)';
         }
-        if (litersGroup) litersGroup.style.display = 'block';
+        if (litersGroup) litersGroup.style.display = (contextSegment === 'Leite' || contextSegment === 'Misto') ? 'block' : 'none';
     } else {
         if (modalTitle) {
             modalTitle.textContent = 'Nova Saída';
@@ -974,6 +1137,15 @@ const openModal = (type) => {
         if (litersGroup) {
             litersGroup.style.display = 'none';
             if (litersInput) litersInput.value = '';
+        }
+    }
+
+    if (headsGroup) {
+        if (contextSegment === 'Corte' || contextSegment === 'Misto') {
+            headsGroup.style.display = 'block';
+        } else {
+            headsGroup.style.display = 'none';
+            if (headsInput) headsInput.value = '';
         }
     }
 
@@ -1142,6 +1314,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const profIe = document.getElementById('prof-ie');
             const profLocal = document.getElementById('prof-local');
             const profTipo = document.getElementById('prof-tipo');
+            const profSegmento = document.getElementById('prof-segmento');
             const profGoal = document.getElementById('prof-goal');
             const profMilkTarget = document.getElementById('prof-milk-target');
 
@@ -1151,7 +1324,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 cpf: profCpf ? profCpf.value.trim() : '',
                 ie: profIe ? profIe.value.trim() : '',
                 local: profLocal ? profLocal.value.trim() : '',
-                tipo: profTipo ? profTipo.value.trim() : ''
+                tipo: profTipo ? profTipo.value.trim() : '',
+                segmento: profSegmento ? profSegmento.value : 'Misto'
             };
 
             localStorage.setItem('rural_profile', JSON.stringify(profile));
@@ -1272,6 +1446,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Formulario Injetar Salvar Nova Transação
     const form = document.getElementById('transaction-form');
+
     if (form) {
         form.addEventListener('submit', (e) => {
             // 5 - Validação: e.preventDefault() no início para evitar recarregamento da página
@@ -1280,139 +1455,145 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let isValid = true;
 
-            // 1 - Restauração do Form: capturar os campos
-            const descInput = document.getElementById('desc');
-            const categoryInput = document.getElementById('category');
-            const amountInput = document.getElementById('amount');
-            const litersInput = document.getElementById('liters');
-            const dateInput = document.getElementById('date-input');
-
-            // Reset error borders
-            if (descInput) descInput.style.borderColor = '#ddd';
-            if (amountInput) amountInput.style.borderColor = '#ddd';
-            if (dateInput) dateInput.style.borderColor = '#ddd';
-
-            const desc = descInput ? descInput.value.trim() : '';
-            const category = categoryInput ? categoryInput.value : '';
-            const amountStr = amountInput ? amountInput.value.replace(/\./g, '').replace(',', '.') : '0';
-            const amount = parseFloat(amountStr);
-
-            console.log("Parsed values:", { desc, category, amountStr, amount });
-
-            let liters = null;
-            if (currentType === 'income' && litersInput && litersInput.value.trim() !== '') {
-                const litersStr = litersInput.value.replace(/\./g, '').replace(',', '.');
-                liters = parseFloat(litersStr);
-            }
-
-            if (!desc && descInput) {
-                descInput.style.borderColor = 'var(--color-expense)';
-                console.log("Validation failed: desc is empty");
-                isValid = false;
-            }
-
-            if ((isNaN(amount) || amount <= 0) && amountInput) {
-                amountInput.style.borderColor = 'var(--color-expense)';
-                console.log("Validation failed: amount is invalid");
-                isValid = false;
-            }
-
-            if (!dateInput || !dateInput.value) {
-                if (dateInput) dateInput.style.borderColor = 'var(--color-expense)';
-                console.log("Validation failed: date is empty");
-                isValid = false;
-            }
-
-            if (!isValid) {
-                alert("Por favor, preencha todos os campos obrigatórios (Data, Descrição e Valor).");
-                console.log("Form is invalid, returning...");
-                return;
-            }
-
-            console.log("Form is valid, processing...");
-            let selectedDate = new Date();
-            let isRetroactive = false;
-
-            if (dateInput && dateInput.value) {
-                // 3 - Fuso Horário e 1 - Ajuste de Comparação
-                const dateString = dateInput.value.replace(/-/g, '/');
-                selectedDate = new Date(dateString);
-                selectedDate.setHours(0, 0, 0, 0);
-
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                // 2 - Regra de Alerta: estritamente menor que hoje
-                isRetroactive = selectedDate < today;
-            }
-
-            const newTransaction = {
-                id: editId ? editId : Date.now(),
-                desc,
-                category,
-                amount,
-                type: currentType,
-                date: selectedDate,
-                liters: liters,
-                retroactive: isRetroactive,
-                photoData: photoBase64
-            };
-
-            // 3 - Preservação de Dados: garantir que o localStorage não foi modificado em outra aba e usar push correto
             try {
-                const storedRaw = localStorage.getItem('rural_data');
-                if (storedRaw) {
-                    const parsed = JSON.parse(storedRaw);
-                    // Re-sync na memória local formatando as datas
-                    transactions = parsed.map(t => ({
-                        ...t,
-                        date: new Date(t.date)
-                    }));
-                }
-            } catch (err) {
-                console.error("Error parsing transactions from local storage before save", err);
-            }
+                // 1 - Restauração do Form: capturar os campos internamente p/ segurança
+                const descInput = document.getElementById('desc');
+                const categoryInput = document.getElementById('category');
+                const amountInput = document.getElementById('amount');
+                const litersInput = document.getElementById('liters');
+                const dateInput = document.getElementById('date-input');
 
-            // 2 - Lógica Dupla (Salvar/Editar): Verificar o editingId (editId)
-            if (editId) {
-                const index = transactions.findIndex(t => t.id === editId);
-                if (index !== -1) {
-                    transactions[index] = newTransaction;
+                // Reset error borders
+                if (descInput) descInput.style.borderColor = '#ddd';
+                if (amountInput) amountInput.style.borderColor = '#ddd';
+                if (dateInput) dateInput.style.borderColor = '#ddd';
+
+                const desc = descInput ? descInput.value.trim() : '';
+                const category = categoryInput ? categoryInput.value : '';
+                const amountStr = amountInput ? amountInput.value.replace(/\./g, '').replace(',', '.') : '0';
+                const amount = parseFloat(amountStr);
+
+                console.log("Salvando transação...", { desc, category, amountStr, amount });
+
+                let liters = null;
+                if (currentType === 'income' && litersInput && litersInput.value.trim() !== '') {
+                    const litersStr = litersInput.value.replace(/\./g, '').replace(',', '.');
+                    liters = parseFloat(litersStr);
+                }
+
+                if (!desc && descInput) {
+                    descInput.style.borderColor = 'var(--color-expense)';
+                    console.log("Validation failed: desc is empty");
+                    isValid = false;
+                }
+
+                if ((isNaN(amount) || amount <= 0) && amountInput) {
+                    amountInput.style.borderColor = 'var(--color-expense)';
+                    console.log("Validation failed: amount is invalid");
+                    isValid = false;
+                }
+
+                if (!dateInput || !dateInput.value) {
+                    if (dateInput) dateInput.style.borderColor = 'var(--color-expense)';
+                    console.log("Validation failed: date is empty");
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    alert("Por favor, preencha todos os campos obrigatórios (Data, Descrição e Valor).");
+                    console.log("Form is invalid, returning...");
+                    return;
+                }
+
+                console.log("Form is valid, processing...");
+                let selectedDate = new Date();
+                let isRetroactive = false;
+
+                if (dateInput && dateInput.value) {
+                    // 3 - Fuso Horário e 1 - Ajuste de Comparação
+                    const dateString = dateInput.value.replace(/-/g, '/');
+                    selectedDate = new Date(dateString);
+                    selectedDate.setHours(0, 0, 0, 0);
+
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+
+                    // 2 - Regra de Alerta: estritamente menor que hoje
+                    isRetroactive = selectedDate < today;
+                }
+
+                const newTransaction = {
+                    id: editId ? editId : Date.now(),
+                    desc,
+                    category,
+                    amount,
+                    type: currentType,
+                    date: selectedDate,
+                    liters: liters,
+                    retroactive: isRetroactive,
+                    photoData: photoBase64
+                };
+
+                // 3 - Preservação de Dados: garantir que o localStorage não foi modificado em outra aba e usar push correto
+                try {
+                    const storedRaw = localStorage.getItem('rural_data');
+                    if (storedRaw) {
+                        const parsed = JSON.parse(storedRaw);
+                        // Re-sync na memória local formatando as datas
+                        transactions = parsed.map(t => ({
+                            ...t,
+                            date: new Date(t.date)
+                        }));
+                    }
+                } catch (err) {
+                    console.error("Error parsing transactions from local storage before save", err);
+                }
+
+                // 2 - Lógica Dupla (Salvar/Editar): Verificar o editingId (editId)
+                if (editId) {
+                    const index = transactions.findIndex(t => t.id === editId);
+                    if (index !== -1) {
+                        transactions[index] = newTransaction;
+                    } else {
+                        transactions.push(newTransaction);
+                    }
                 } else {
                     transactions.push(newTransaction);
                 }
-            } else {
-                transactions.push(newTransaction);
-            }
 
-            // Salvar no storage
-            try {
-                localStorage.setItem('rural_data', JSON.stringify(transactions));
-            } catch (err) {
-                if (err.name === 'QuotaExceededError') {
-                    alert('Aviso: Armazenamento do navegador cheio. A imagem não foi salva.');
-                    newTransaction.photoData = null;
+                // Salvar no storage
+                try {
                     localStorage.setItem('rural_data', JSON.stringify(transactions));
-                } else {
-                    console.error("Error saving transactions to local storage", err);
+                } catch (err) {
+                    if (err.name === 'QuotaExceededError') {
+                        alert('Aviso: Armazenamento do navegador cheio. A imagem não foi salva.');
+                        newTransaction.photoData = null;
+                        localStorage.setItem('rural_data', JSON.stringify(transactions));
+                    } else {
+                        console.error("Error saving transactions to local storage", err);
+                    }
                 }
+
+                // 4 - Gatilhos de Atualização
+                renderTransactions();
+                updateDashboard(); // Esta função já atira o renderCharts() e renderProjection()
+
+                if (isRetroactive && typeof addNotification === 'function') {
+                    addNotification('Lançamento retroativo registrado com sucesso', 'success');
+                }
+
+                // Finalmente, fechar o form/modal
+                closeModal();
+
+                // Só pra garantir o estado zerado para o proximo push
+                editId = null;
+                photoBase64 = null;
+                if (form.reset) form.reset();
+
+            } catch (error) {
+                console.error("Erro critico ao salvar transacao:", error);
+                alert("Ocorreu um erro ao salvar a transação. Verifique o console.");
             }
-
-            // 4 - Gatilhos de Atualização
-            renderTransactions();
-            updateDashboard(); // Esta função já atira o renderCharts() e renderProjection()
-
-            if (isRetroactive && typeof addNotification === 'function') {
-                addNotification('Lançamento retroativo registrado com sucesso', 'success');
-            }
-
-            // Finalmente, fechar o form/modal
-            closeModal();
-
-            // Só pra garantir o estado zerado para o proximo push
-            editId = null;
-            photoBase64 = null;
-            if (form.reset) form.reset();
         });
     }
 
@@ -1746,4 +1927,27 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Dashboard Module Buttons
+    const btnLeite = document.getElementById('module-leite-btn');
+    const btnCorte = document.getElementById('module-corte-btn');
+
+    if (btnLeite) {
+        btnLeite.addEventListener('click', () => {
+            localStorage.setItem('rural_active_module', 'Leite');
+            if (typeof addNotification === 'function') addNotification('Módulo Leite Ativado! Entradas e Saídas focadas em Atividade Leiteira.', 'success');
+            updateDashboard();
+            renderTransactions();
+        });
+    }
+
+    if (btnCorte) {
+        btnCorte.addEventListener('click', () => {
+            localStorage.setItem('rural_active_module', 'Corte');
+            if (typeof addNotification === 'function') addNotification('Módulo Pecuária Ativado! Entradas e Saídas focadas em Pecuária/Corte.', 'success');
+            updateDashboard();
+            renderTransactions();
+        });
+    }
+
 });
