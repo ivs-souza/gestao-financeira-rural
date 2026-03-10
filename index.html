@@ -110,33 +110,70 @@
 
 
 
-            <div class="dashboard">
-                <div class="card income">
-                    <h2>Entradas Totais</h2>
-                    <div class="amount" id="total-income">R$ 0,00</div>
+            <div class="dashboard"
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 2rem;">
+                <div class="card balance"
+                    style="grid-column: span 2; background: linear-gradient(135deg, var(--color-income) 0%, #2e7d32 100%); color: white; display: flex; flex-direction: column; align-items: center; padding: 2.5rem 1rem;">
+                    <h2 id="balance-title"
+                        style="color: rgba(255,255,255,0.9); font-size: 1.1rem; margin-bottom: 0.5rem;">Saldo Total
+                        (Fazenda)</h2>
+                    <div class="amount" id="total-balance"
+                        style="font-size: 2.8rem; font-weight: 800; color: white; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">
+                        R$ 0,00</div>
                 </div>
-                <div class="card expense">
-                    <h2>Saídas Totais</h2>
-                    <div class="amount" id="total-expense">R$ 0,00</div>
+                <div class="card income"
+                    style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                    <h2 style="font-size: 0.9rem;">Entradas Globais</h2>
+                    <div class="amount" id="total-income" style="font-size: 1.2rem;">R$ 0,00</div>
                 </div>
-                <div class="card balance" style="grid-column: span 2;">
-                    <h2>Saldo Atual</h2>
-                    <div class="amount" id="total-balance">R$ 0,00</div>
+                <div class="card expense"
+                    style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                    <h2 style="font-size: 0.9rem;">Saídas Globais</h2>
+                    <div class="amount" id="total-expense" style="font-size: 1.2rem;">R$ 0,00</div>
+                </div>
+            </div>
+
+            <!-- COMPARATIVE BAR CHART (Visão Geral Only) -->
+            <div id="comparison-chart-container" class="card chart-card" style="margin-bottom: 2rem; display: none;">
+                <h2 style="font-size: 1.1rem; margin-bottom: 1rem; text-align: center;">Faturamento: Leite vs Pecuária
+                </h2>
+                <div style="position: relative; height: 250px; width: 100%;">
+                    <canvas id="comparisonChart"></canvas>
                 </div>
             </div>
 
             <!-- ACESSO RÁPIDO AOS MÓDULOS -->
+            <h3 style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--color-text);">Filtros de Setor</h3>
             <div id="active-modules"
                 style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 2rem;">
                 <div class="card" id="module-leite-btn"
-                    style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border: 2px solid #e0e0e0; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem;">
-                    <span style="font-size: 3rem; display: block; margin-bottom: 0.8rem;">🐄</span>
-                    <h3 style="color: #333; margin: 0; font-size: 1.1rem;">Módulo Leite</h3>
+                    style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border: 2px solid #e0e0e0; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; transition: transform 0.2s;">
+                    <span style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem;">🐄</span>
+                    <h3 style="color: #333; margin: 0; font-size: 1rem;">Ir para Leite</h3>
                 </div>
                 <div class="card" id="module-corte-btn"
-                    style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border: 2px solid #e0e0e0; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem;">
-                    <span style="font-size: 3rem; display: block; margin-bottom: 0.8rem;">🥩</span>
-                    <h3 style="color: #333; margin: 0; font-size: 1.1rem;">Pecuária e Corte</h3>
+                    style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border: 2px solid #e0e0e0; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; transition: transform 0.2s;">
+                    <span style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem;">🥩</span>
+                    <h3 style="color: #333; margin: 0; font-size: 1rem;">Ir para Pecuária</h3>
+                </div>
+                <div class="card" id="module-misto-btn"
+                    style="grid-column: span 2; background: var(--color-card); border: 1px solid #ddd; cursor: pointer; text-align: center; display: flex; flex-direction: row; gap: 0.5rem; align-items: center; justify-content: center; padding: 1rem;">
+                    <span style="font-size: 1.2rem;">🏠</span>
+                    <h3 style="color: var(--color-text-light); margin: 0; font-size: 0.95rem;">Retornar à Visão Geral
+                    </h3>
+                </div>
+            </div>
+
+            <!-- RECENT TRANSACTIONS (Mixed Feed) -->
+            <div id="recent-feed-container" class="card" style="margin-bottom: 2rem; display: none; padding: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="font-size: 1rem; color: var(--color-text); margin: 0;">Últimas Movimentações</h3>
+                    <button class="nav-item" data-target="tab-entradas"
+                        style="background: none; border: none; font-size: 0.8rem; color: var(--color-income); cursor: pointer;">Ver
+                        Todas</button>
+                </div>
+                <div id="recent-transactions-list" style="display: flex; flex-direction: column; gap: 0.8rem;">
+                    <!-- Injected via JS -->
                 </div>
             </div>
 

@@ -259,6 +259,29 @@ const updateDashboard = () => {
         filteredTotalEl.style.color = balance < 0 ? 'var(--color-expense)' : 'var(--color-income)';
     }
 
+    // VISÃO GERAL (MISTO) SPECIFIC UI
+    const activeModule = localStorage.getItem('rural_active_module') || 'Misto';
+    const comparisonChartContainer = document.getElementById('comparison-chart-container');
+    const recentFeedContainer = document.getElementById('recent-feed-container');
+    const balanceTitleEl = document.getElementById('balance-title');
+
+    if (balanceTitleEl) {
+        if (activeModule === 'Misto') balanceTitleEl.textContent = 'Saldo Total (Fazenda)';
+        else if (activeModule === 'Leite') balanceTitleEl.textContent = 'Saldo Total (Leite)';
+        else if (activeModule === 'Corte') balanceTitleEl.textContent = 'Saldo Total (Pecuária)';
+    }
+
+    if (activeModule === 'Misto') {
+        if (comparisonChartContainer) comparisonChartContainer.style.display = 'block';
+        if (recentFeedContainer) {
+            recentFeedContainer.style.display = 'block';
+            renderRecentFeed();
+        }
+    } else {
+        if (comparisonChartContainer) comparisonChartContainer.style.display = 'none';
+        if (recentFeedContainer) recentFeedContainer.style.display = 'none';
+    }
+
     if (dailyAvgEl) {
         let daysInMonth = new Date(currentYearFilter, parseInt(currentMonthFilter) + 1, 0).getDate();
         if (currentMonthFilter === 'all') daysInMonth = 365;
@@ -604,6 +627,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+let comparisonChartInstance = null;
+
 /* ==========================================================================
    CHART.JS LOGIC
    ========================================================================== */
@@ -623,6 +648,85 @@ function renderCharts(filteredData) {
 
     renderExpensesDonut(filteredData, textColor);
     renderMilkPriceLine(filteredData, textColor, gridColor);
+    renderComparisonChart(filteredData, textColor, gridColor);
+}
+
+function renderComparisonChart(filteredData, textColor, gridColor) {
+    const ctxEl = document.getElementById('comparisonChart');
+    if (!ctxEl) return;
+
+    if (comparisonChartInstance) {
+        comparisonChartInstance.destroy();
+    }
+
+    const activeModule = localStorage.getItem('rural_active_module') || 'Misto';
+    if (activeModule !== 'Misto') {
+        return; // Only render when Dashboard is global
+    }
+
+    const currentMonthIncomes = filteredData.filter(t => t.type === 'income');
+
+    let milkIncome = 0;
+    let meatIncome = 0;
+
+    currentMonthIncomes.forEach(t => {
+        if (t.activity === 'pecuaria') meatIncome += t.amount;
+        else milkIncome += t.amount; // defaults to milk
+    });
+
+    if (milkIncome === 0 && meatIncome === 0) {
+        ctxEl.style.display = 'none';
+        return;
+    }
+
+    ctxEl.style.display = 'block';
+
+    comparisonChartInstance = new Chart(ctxEl, {
+        type: 'bar',
+        data: {
+            labels: ['Leite 🐄', 'Pecuária 🥩'],
+            datasets: [{
+                label: 'Faturamento Bruto',
+                data: [milkIncome, meatIncome],
+                backgroundColor: [
+                    '#4caf50', // Verde Leite
+                    '#a0522d'  // Marrom Pecuaria
+                ],
+                borderRadius: 4,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.raw);
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: gridColor },
+                    ticks: {
+                        color: textColor,
+                        callback: function (value) {
+                            return 'R$ ' + (value / 1000 >= 1 ? (value / 1000).toFixed(1) + 'k' : value);
+                        }
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: textColor, font: { weight: 'bold' } }
+                }
+            }
+        }
+    });
 }
 
 function renderExpensesDonut(filteredData, textColor) {
@@ -824,6 +928,55 @@ const createTransactionElement = (t) => {
       </div>
     `;
     return item;
+    return item;
+};
+
+window.renderRecentFeed = () => {
+    const feedContainer = document.getElementById('recent-transactions-list');
+    if (!feedContainer) return;
+
+    // Get the global unfiltered transactions, sort by newest first, and take top 5
+    const recentTx = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+
+    feedContainer.innerHTML = '';
+
+    if (recentTx.length === 0) {
+        feedContainer.innerHTML = '<p style="text-align: center; color: var(--color-text-light); font-size: 0.9rem; margin-top: 1rem;">Nenhuma movimentação recente</p>';
+        return;
+    }
+
+    recentTx.forEach(t => {
+        const item = document.createElement('div');
+        item.style.display = 'flex';
+        item.style.justifyContent = 'space-between';
+        item.style.alignItems = 'center';
+        item.style.padding = '0.8rem';
+        item.style.background = 'var(--color-bg)';
+        item.style.borderRadius = '8px';
+        item.style.borderLeft = `4px solid ${t.type === 'income' ? 'var(--color-income)' : 'var(--color-expense)'}`;
+
+        const isLeite = t.activity !== 'pecuaria'; // retro-compatible default
+        const emoji = isLeite ? '🐄' : '🥩';
+
+        const amountStr = formatCurrency(t.amount);
+        const nameStr = t.desc;
+        const color = t.type === 'income' ? 'var(--color-income)' : 'var(--color-expense)';
+
+        // Ensure date is a Date object
+        const validDate = t.date instanceof Date ? t.date : new Date(t.date);
+
+        item.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 0.8rem;">
+                <span style="font-size: 1.2rem;" title="${isLeite ? 'Leite' : 'Pecuária'}">${emoji}</span>
+                <div style="display: flex; flex-direction: column;">
+                    <span style="font-weight: 600; font-size: 0.9rem; color: var(--color-text);">${nameStr}</span>
+                    <span style="font-size: 0.75rem; color: var(--color-text-light);">${validDate.toLocaleDateString('pt-BR', { timeZone: 'UTC' })} • ${t.category}</span>
+                </div>
+            </div>
+            <span style="font-weight: 700; font-size: 0.95rem; color: ${color};">${t.type === 'income' ? '+' : '-'}${amountStr}</span>
+        `;
+        feedContainer.appendChild(item);
+    });
 };
 
 window.renderTransactions = () => {
@@ -1878,8 +2031,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const alertModal = document.getElementById('alert-modal');
     const alertForm = document.getElementById('alert-form');
 
-    // Função para garantir a abertura do modal
-    function toggleAlertModal(show) {
+    const toggleAlertModal = (show) => {
         const modal = document.getElementById('alert-modal');
         if (modal) {
             modal.style.display = show ? 'flex' : 'none';
@@ -1890,7 +2042,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 modal.classList.remove('active');
             }
         }
-    }
+    };
+
+    // Filtros de Setor na Visão Geral
+    const setupModuleButtons = () => {
+        const btnLeite = document.getElementById('module-leite-btn');
+        const btnCorte = document.getElementById('module-corte-btn');
+        const btnMisto = document.getElementById('module-misto-btn');
+
+        const setActiveModule = (moduleName) => {
+            localStorage.setItem('rural_active_module', moduleName);
+            updateDashboard();
+            renderTransactions();
+            renderMarket();
+        };
+
+        if (btnLeite) btnLeite.addEventListener('click', () => setActiveModule('Leite'));
+        if (btnCorte) btnCorte.addEventListener('click', () => setActiveModule('Corte'));
+        if (btnMisto) btnMisto.addEventListener('click', () => setActiveModule('Misto'));
+    };
+    setupModuleButtons();
 
     // Forçar o clique no botão
     document.body.addEventListener('click', function (e) {
@@ -1974,7 +2145,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnLeite) {
         btnLeite.addEventListener('click', () => {
             localStorage.setItem('rural_active_module', 'Leite');
-            if (typeof addNotification === 'function') addNotification('Módulo Leite Ativado! Entradas e Saídas focadas em Atividade Leiteira.', 'success');
             updateDashboard();
             renderTransactions();
         });
@@ -1983,7 +2153,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnCorte) {
         btnCorte.addEventListener('click', () => {
             localStorage.setItem('rural_active_module', 'Corte');
-            if (typeof addNotification === 'function') addNotification('Módulo Pecuária Ativado! Entradas e Saídas focadas em Pecuária/Corte.', 'success');
             updateDashboard();
             renderTransactions();
         });
