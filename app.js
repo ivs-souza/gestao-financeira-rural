@@ -766,17 +766,24 @@ function renderComparisonChart(filteredData, textColor, gridColor) {
         return; // Only render when Dashboard is global
     }
 
-    const currentMonthIncomes = filteredData.filter(t => t.type === 'income');
+    // Calcular Balanço por Atividade
+    let milkIncome = 0, milkExpense = 0;
+    let meatIncome = 0, meatExpense = 0;
 
-    let milkIncome = 0;
-    let meatIncome = 0;
+    filteredData.forEach(t => {
+        const amt = parseFloat(t.amount) || 0;
+        const isLeite = (t.activity !== 'pecuaria');
 
-    currentMonthIncomes.forEach(t => {
-        if (t.activity === 'pecuaria') meatIncome += t.amount;
-        else milkIncome += t.amount; // defaults to milk
+        if (t.type === 'income') {
+            if (isLeite) milkIncome += amt;
+            else meatIncome += amt;
+        } else {
+            if (isLeite) milkExpense += amt;
+            else meatExpense += amt;
+        }
     });
 
-    if (milkIncome === 0 && meatIncome === 0) {
+    if (milkIncome === 0 && meatIncome === 0 && milkExpense === 0 && meatExpense === 0) {
         ctxEl.style.display = 'none';
         return;
     }
@@ -787,26 +794,44 @@ function renderComparisonChart(filteredData, textColor, gridColor) {
         type: 'bar',
         data: {
             labels: ['Leite 🐄', 'Pecuária 🥩'],
-            datasets: [{
-                label: 'Faturamento Bruto',
-                data: [milkIncome, meatIncome],
-                backgroundColor: [
-                    '#4caf50', // Verde Leite
-                    '#a0522d'  // Marrom Pecuaria
-                ],
-                borderRadius: 4,
-                barPercentage: 0.6
-            }]
+            datasets: [
+                {
+                    label: 'Faturamento',
+                    data: [milkIncome, meatIncome],
+                    backgroundColor: '#4caf50', // Verde
+                    borderRadius: 4,
+                    barPercentage: 0.8,
+                    categoryPercentage: 0.7
+                },
+                {
+                    label: 'Custos',
+                    data: [milkExpense, meatExpense],
+                    backgroundColor: 'var(--color-expense)', // Vermelho
+                    borderRadius: 4,
+                    barPercentage: 0.8,
+                    categoryPercentage: 0.7
+                }
+            ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false },
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: textColor,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 15,
+                        font: { size: 12, weight: 'bold' }
+                    }
+                },
                 tooltip: {
                     callbacks: {
                         label: function (context) {
-                            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.raw);
+                            return context.dataset.label + ': ' + new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.raw);
                         }
                     }
                 }
