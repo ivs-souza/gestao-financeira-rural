@@ -13,9 +13,10 @@
     --shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
 }
 
-.brand-lid { font-weight: 800; font-size: 1.4rem; color: #2D5A27; }
-.brand-agro { font-weight: 300; font-size: 1.4rem; color: #333; }
-#farm-name-display { display: block; font-size: 0.8rem; color: #666; }
+.logo-container { line-height: 1.1; letter-spacing: -0.5px; }
+.brand-lid { font-weight: 900; font-size: 1.6rem; color: #1B4332; }
+.brand-agro { font-weight: 200; font-size: 1.6rem; color: #333; }
+#farm-name-display { display: block; font-size: 0.8rem; color: #666; font-weight: 400; }
 
 .dark-mode {
     --color-bg: #121212;
