@@ -1514,6 +1514,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 globalUserId = user.uid;
                 if (firebaseAuthScreen) firebaseAuthScreen.style.display = 'none';
                 
+                // Mostra Dashboard se escondido
+                const appContainer = document.querySelector('.app-container');
+                const bottomNav = document.querySelector('.bottom-nav');
+                if (appContainer) appContainer.style.display = 'block';
+                if (bottomNav) bottomNav.style.display = 'flex';
+
                 // Verifica se já fez o "Welcome" (setup inicial)
                 const profileRef = window.firebaseDocWrapper(window.firebaseDb, 'users', user.uid);
                 window.firebaseGetDocWrapper(profileRef).then(snap => {
@@ -1528,8 +1534,35 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 // Não logado
                 globalUserId = null;
+                
+                // 3- Limpeza de Estado: Zerar dados locais
+                transactions = [];
+                marketAlerts = [];
+                systemNotifications = [];
+                localStorage.removeItem('rural_user');
+                localStorage.removeItem('rural_profile');
+                localStorage.removeItem('rural_active_module');
+                localStorage.removeItem('rural_goal');
+                localStorage.removeItem('rural_milk_target');
+                
+                // Limpar UI residual
+                if (headerTitle) headerTitle.textContent = 'Gestão Rural';
+                if (typeof updateDashboard === 'function') updateDashboard();
+                if (typeof renderTransactions === 'function') renderTransactions();
+                if (typeof renderMarket === 'function') renderMarket();
+                if (typeof renderSystemNotifications === 'function') renderSystemNotifications();
+
+                // 4- Redirecionamento e Observer UI: Mostrar tela de login novamente
                 if (firebaseAuthScreen) firebaseAuthScreen.style.display = 'flex';
                 if (authScreenOriginal) authScreenOriginal.style.display = 'none';
+                
+                const appContainer = document.querySelector('.app-container');
+                const bottomNav = document.querySelector('.bottom-nav');
+                if (appContainer) appContainer.style.display = 'none'; // Esconder Dashboard
+                if (bottomNav) bottomNav.style.display = 'none';
+
+                const fbAuthForm = document.getElementById('firebase-auth-form');
+                if (fbAuthForm) fbAuthForm.reset();
             }
         });
     }
@@ -1784,27 +1817,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Botão Sair
     const btnLogout = document.getElementById('btn-logout');
     if (btnLogout) {
-        btnLogout.addEventListener('click', async () => {
-            if (confirm('Tem certeza que deseja sair?')) {
-                // Limpar dados locais
-                localStorage.removeItem('rural_user');
-                localStorage.removeItem('rural_profile');
-                localStorage.removeItem('rural_active_module');
-                localStorage.removeItem('rural_goal');
-                localStorage.removeItem('rural_milk_target');
-                transactions = [];
-                marketAlerts = [];
-                systemNotifications = [];
-                
+        btnLogout.addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (confirm('Tem certeza que deseja sair ou trocar de usuário?')) {
+                // 1- Função de Logout via Firebase
                 if (window.firebaseAuth) {
                     try {
+                        console.log("Executando sign out do Firebase...");
                         await window.signOutWrapper(window.firebaseAuth);
-                        // Recarrega página inteira para limpar o DOM
-                        location.reload();
+                        // Observador de estado detectará e limpará a tela e ocultará o app-container!
                     } catch (err) {
                         console.error('Logout error:', err);
+                        alert("Erro ao sair: " + err.message);
                     }
                 } else {
+                    // Fallback
                     location.reload();
                 }
             }
