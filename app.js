@@ -1436,8 +1436,6 @@ window.saveAnimal = async (e) => {
         closeAnimalModal();
         renderAnimals();
         updateDashboard();
-        
-        window.addNotification(`Animal ${animalId} salvo com sucesso!`, 'success');
     } catch (error) {
         console.error("Erro ao salvar animal:", error);
         alert("Erro ao salvar animal: " + error.message);
@@ -1489,18 +1487,23 @@ window.renderManejoAlerts = () => {
         const lastCalving = new Date(animal.lastCalving);
         const del = Math.floor((today - lastCalving) / (1000 * 60 * 60 * 24));
 
+        // 1. Alerta de Secagem (DEL >= 305)
         if (del >= 305) {
             alerts.push({
                 type: 'secagem',
                 message: `Vaca ${animal.animalId}: Iniciar Secagem (DEL ${del} dias)`
             });
-        } else if (del >= 280) {
+        } 
+        
+        // 2. Alerta de Nutrição (Pico de Produção - 60 dias)
+        if (del === 60) {
             alerts.push({
-                type: 'alerta',
-                message: `Vaca ${animal.animalId}: Próxima da Secagem (${305 - del} dias rest.)`
+                type: 'nutricao',
+                message: `Vaca ${animal.animalId}: Pico de Produção (Ajustar Nutrição)`
             });
         }
 
+        // 3. Alerta de Pré-Parto (15 dias antes)
         if (animal.insemination) {
             const insDate = new Date(animal.insemination);
             const calvingDate = new Date(insDate);
@@ -1510,7 +1513,7 @@ window.renderManejoAlerts = () => {
             if (daysToParto <= 15 && daysToParto >= 0) {
                 alerts.push({
                     type: 'parto',
-                    message: `Vaca ${animal.animalId}: Parto previsto em ${daysToParto} dias!`
+                    message: `Vaca ${animal.animalId}: Pré-Parto Crítico (${daysToParto} dias rest.)`
                 });
             }
         }
@@ -1525,7 +1528,13 @@ window.renderManejoAlerts = () => {
     alerts.forEach(alert => {
         const div = document.createElement('div');
         div.className = 'dashboard-alert-item';
-        div.style.borderLeftColor = alert.type === 'parto' ? 'var(--color-income)' : '#ed8936';
+        
+        // Color customization based on type
+        let borderColor = '#ed8936'; // orange (secagem/nutricao)
+        if (alert.type === 'parto') borderColor = 'var(--color-expense)'; // red-ish
+        if (alert.type === 'nutricao') borderColor = 'var(--color-income)'; // green-ish
+        
+        div.style.borderLeftColor = borderColor;
         div.innerHTML = `<span><strong>Manejo:</strong> ${alert.message}</span>`;
         list.appendChild(div);
     });
