@@ -11,9 +11,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" href="icon-192.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2e7d32">
+    <meta name="theme-color" content="#00E676">
 
     <script>
         if ('serviceWorker' in navigator) {
@@ -110,11 +111,13 @@
 
     <div class="app-container">
         <header class="app-header">
-            <div class="logo-container">
-                <span class="brand-lid">Lid</span><span class="brand-agro">Agro</span>
+            <div class="brand-container">
+                <div class="brand-logo">
+                    <span class="brand-lid">Lid</span><span class="brand-agro">Agro</span>
+                </div>
                 <small id="farm-name-display">Fazenda Modelo 001</small>
             </div>
-            <div style="display: flex; gap: 15px; align-items: center; flex-shrink: 0;">
+            <div class="header-actions">
                 <div id="notification-wrapper" style="position: relative;">
                     <button id="btn-notifications" class="header-bell"
                         style="background: transparent; border: none; cursor: pointer; padding: 8px; transition: color 0.3s ease; display: flex; justify-content: center; align-items: center; margin: 0; position: relative;">
