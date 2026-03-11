@@ -1,13 +1,13 @@
 :root {
     /* Requested dynamic colors */
-    --color-income: rgb(0, 150, 0);
-    --color-expense: rgb(200, 0, 0);
+    --color-income: #50C878; /* Emerald Green */
+    --color-expense: #e53e3e; /* Standard Red for better contrast */
 
     /* Additional variables */
     --color-bg: #f4f7f6;
     --color-card: #ffffff;
-    --color-text: #333333;
-    --color-text-light: #777777;
+    --color-text: #2d3748;
+    --color-text-light: #36454F; /* Graphite Gray */
     --font-family: 'Inter', system-ui, sans-serif;
     --border-radius: 16px;
     --shadow: 0 8px 30px rgba(0, 0, 0, 0.06);

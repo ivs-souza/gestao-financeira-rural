@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão Financeira Rural</title>
+    <title>LidAgro</title>
     <meta name="description"
         content="Web App de Gerenciamento Financeiro Rural. Acompanhe entradas e saídas de sua produção de forma simples.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -70,7 +70,7 @@
     <!-- Auth Screen for Firebase -->
     <div id="firebase-auth-screen" class="auth-overlay" style="display: flex; z-index: 10000; background-color: var(--color-bg);">
         <div class="auth-modal" style="text-align: center;">
-            <h2>Login no Gestor Rural</h2>
+            <h2>Login no LidAgro</h2>
             <p style="margin-bottom: 20px;">Acesse sua conta para sincronizar seus dados.</p>
             <form id="firebase-auth-form" onsubmit="return false;">
                 <div class="form-group" style="text-align: left;">
@@ -94,7 +94,7 @@
     <!-- Original Welcome Screen (will be repurposed for first time setup after login) -->
     <div id="auth-screen" class="auth-overlay" style="display: none;">
         <div class="auth-modal">
-            <h2>Bem-vindo ao Gestor Rural</h2>
+            <h2>Bem-vindo ao LidAgro</h2>
             <p>Para começar, como podemos chamar você ou sua propriedade?</p>
             <form id="auth-form" onsubmit="return false;">
                 <div class="form-group">
@@ -110,7 +110,7 @@
     <div class="app-container">
         <header
             style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; width: 100%; box-sizing: border-box;">
-            <h1 style="margin: 0; font-size: 1.8rem; flex-shrink: 0;">Gestão Rural</h1>
+            <h1 style="margin: 0; font-size: 1.8rem; flex-shrink: 0; color: var(--color-income); font-weight: 800;">LidAgro</h1>
             <div style="display: flex; gap: 15px; align-items: center; flex-shrink: 0;">
                 <div id="notification-wrapper" style="position: relative;">
                     <button id="btn-notifications" class="header-bell"

@@ -1,6 +1,6 @@
 {
-  "name": "Gestor Rural",
-  "short_name": "Gestão Rural",
+  "name": "LidAgro",
+  "short_name": "LidAgro",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
