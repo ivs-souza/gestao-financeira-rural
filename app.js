@@ -8,10 +8,12 @@ let globalUserId = null;
 
 
 let transactions = [];
+let animals = [];
 let marketAlerts = [];
 let systemNotifications = [];
 let currentType = '';
 let currentFilter = 'all';
+let animalEditId = null;
 
 // Referências globais para destruir gráficos anteriores ao re-renderizar
 let expensesChartInstance = null;
@@ -78,6 +80,19 @@ async function loadFirebaseData(userId) {
         loadedTxs.sort((a, b) => b.date - a.date);
         transactions = loadedTxs;
 
+        // 3. Carregar Animais da subcoleção
+        const animalsRef = window.firebaseCollectionWrapper(db, 'users', userId, 'animals');
+        const animalsSnap = await window.firebaseGetDocsWrapper(animalsRef);
+        
+        const loadedAnimals = [];
+        animalsSnap.forEach((doc) => {
+            loadedAnimals.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+        animals = loadedAnimals;
+
         // Atualizar interface
         const headerTitle = document.querySelector('header h1');
         const savedUser = localStorage.getItem('rural_user');
@@ -85,6 +100,7 @@ async function loadFirebaseData(userId) {
 
         updateDashboard();
         renderTransactions();
+        renderAnimals();
         
     } catch (error) {
         console.error("Erro ao carregar dados do Firebase:", error);
@@ -477,6 +493,8 @@ const updateDashboard = () => {
     renderCharts(filtered);
     renderMarket(filtered);
     renderProjection();
+    renderAnimals();
+    renderManejoAlerts();
 };
 
 /* ==========================================================================
@@ -1266,6 +1284,254 @@ window.renderDashboardAlerts = () => {
 };
 
 /* ==========================================================================
+   3.7 MÓDULO REBANHO (LÓGICA TÉCNICA)
+   ========================================================================== */
+window.renderAnimals = () => {
+    const list = document.getElementById('animals-list');
+    const totalAnimalsEl = document.getElementById('total-animals');
+    const totalLactatingEl = document.getElementById('total-lactating');
+    const totalDryEl = document.getElementById('total-dry');
+
+    if (!list) return;
+
+    list.innerHTML = '';
+    let countLactating = 0;
+    let countDry = 0;
+
+    if (animals.length === 0) {
+        list.innerHTML = '<div style="padding: 2.5rem; text-align: center; color: var(--color-text-light);">Nenhum animal cadastrado no rebanho.</div>';
+        if (totalAnimalsEl) totalAnimalsEl.textContent = '0';
+        if (totalLactatingEl) totalLactatingEl.textContent = '0';
+        if (totalDryEl) totalDryEl.textContent = '0';
+        return;
+    }
+
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    // Sort by Brinco/ID
+    const sortedAnimals = [...animals].sort((a,b) => (a.animalId || "").localeCompare(b.animalId || ""));
+
+    sortedAnimals.forEach(animal => {
+        const lastCalving = new Date(animal.lastCalving);
+        const del = Math.floor((today - lastCalving) / (1000 * 60 * 60 * 24));
+        
+        let status = 'Novilha';
+        let statusClass = 'status-novilha';
+        
+        if (del >= 0) {
+            if (del < 305) {
+                status = 'Lactação';
+                statusClass = 'status-lactacao';
+                countLactating++;
+            } else {
+                status = 'Secagem Necessária';
+                statusClass = 'status-secagem';
+                countDry++;
+            }
+        }
+
+        // Progress Calculation (305 days cycle)
+        let progress = (del / 305) * 100;
+        if (progress > 100) progress = 100;
+        if (progress < 0) progress = 0;
+
+        // Proximo Parto logic
+        let nextCalvingDate = null;
+        let daysToCalving = null;
+        if (animal.insemination) {
+            const insDate = new Date(animal.insemination);
+            nextCalvingDate = new Date(insDate);
+            nextCalvingDate.setDate(insDate.getDate() + 283);
+            daysToCalving = Math.floor((nextCalvingDate - today) / (1000 * 60 * 60 * 24));
+        }
+
+        const card = document.createElement('div');
+        card.className = 'animal-card';
+        card.innerHTML = `
+            <div class="animal-card-header">
+                <div class="animal-info">
+                    <div class="animal-avatar">🐄</div>
+                    <div>
+                        <div class="animal-name">${animal.animalId} ${animal.name ? '- ' + animal.name : ''}</div>
+                        <div class="animal-breed">${animal.breed || 'Raça não inf.'}</div>
+                    </div>
+                </div>
+                <div class="status-tag ${statusClass}">${status}</div>
+            </div>
+
+            <div class="lactation-progress-container">
+                <div class="lactation-progress-labels">
+                    <span>DEL: ${del >= 0 ? del : 0} dias</span>
+                    <span>Meta: 305 dias</span>
+                </div>
+                <div class="lactation-progress-bar-bg">
+                    <div class="lactation-progress-fill" style="width: ${progress}%; background-color: ${del >= 305 ? '#ed8936' : 'var(--color-income)'}"></div>
+                </div>
+            </div>
+
+            <div class="animal-details">
+                <div>
+                    <strong>Último Parto:</strong><br>
+                    ${lastCalving.toLocaleDateString('pt-BR')}
+                </div>
+                <div>
+                    <strong>Próximo Parto:</strong><br>
+                    ${nextCalvingDate ? nextCalvingDate.toLocaleDateString('pt-BR') : 'Não inseminada'}
+                    ${daysToCalving !== null ? `<br><small>(${daysToCalving} dias rest.)</small>` : ''}
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 10px; justify-content: flex-end;">
+                <button onclick="deleteAnimal('${animal.id}')" style="background: transparent; color: var(--color-expense); padding: 5px; font-size: 0.8rem; border: 1px solid var(--color-expense); border-radius: 4px;">Excluir</button>
+            </div>
+        `;
+        list.appendChild(card);
+    });
+
+    if (totalAnimalsEl) totalAnimalsEl.textContent = animals.length;
+    if (totalLactatingEl) totalLactatingEl.textContent = countLactating;
+    if (totalDryEl) totalDryEl.textContent = countDry;
+};
+
+window.saveAnimal = async (e) => {
+    e.preventDefault();
+    if (!globalUserId) return;
+
+    const animalId = document.getElementById('animal-id').value.trim();
+    const name = document.getElementById('animal-name').value.trim();
+    const breed = document.getElementById('animal-breed').value.trim();
+    const lastCalving = document.getElementById('animal-last-calving').value;
+    const insemination = document.getElementById('animal-insemination').value;
+
+    if (!animalId || !lastCalving) {
+        alert("Brinco e Data de Parto são obrigatórios.");
+        return;
+    }
+
+    const animalData = {
+        animalId,
+        name,
+        breed,
+        lastCalving,
+        insemination: insemination || null,
+        updatedAt: new Date().toISOString()
+    };
+
+    try {
+        const db = window.firebaseDb;
+        const id = animalEditId || Date.now().toString();
+        const animalRef = window.firebaseDocWrapper(db, 'users', globalUserId, 'animals', id);
+        
+        await window.firebaseSetDocWrapper(animalRef, animalData);
+        
+        // Update local state
+        const index = animals.findIndex(a => a.id === id);
+        if (index !== -1) {
+            animals[index] = { id, ...animalData };
+        } else {
+            animals.push({ id, ...animalData });
+        }
+
+        closeAnimalModal();
+        renderAnimals();
+        updateDashboard();
+        
+        window.addNotification(`Animal ${animalId} salvo com sucesso!`, 'success');
+    } catch (error) {
+        console.error("Erro ao salvar animal:", error);
+        alert("Erro ao salvar animal: " + error.message);
+    }
+};
+
+window.deleteAnimal = async (id) => {
+    if (!confirm("Deseja realmente excluir este animal do rebanho?")) return;
+    
+    try {
+        const db = window.firebaseDb;
+        const animalRef = window.firebaseDocWrapper(db, 'users', globalUserId, 'animals', id);
+        await window.firebaseDeleteDocWrapper(animalRef);
+        
+        animals = animals.filter(a => a.id !== id);
+        renderAnimals();
+        updateDashboard();
+        window.addNotification("Animal removido do rebanho.", "info");
+    } catch (error) {
+        console.error("Erro ao excluir animal:", error);
+    }
+};
+
+window.openAnimalModal = () => {
+    const modal = document.getElementById('animal-modal');
+    if (modal) modal.classList.add('active');
+    animalEditId = null;
+};
+
+window.closeAnimalModal = () => {
+    const modal = document.getElementById('animal-modal');
+    const form = document.getElementById('animal-form');
+    if (modal) modal.classList.remove('active');
+    if (form) form.reset();
+    animalEditId = null;
+};
+
+window.renderManejoAlerts = () => {
+    const section = document.getElementById('dashboard-manejo-alerts-section');
+    const list = document.getElementById('dashboard-manejo-alerts-list');
+    if (!section || !list) return;
+
+    list.innerHTML = '';
+    const alerts = [];
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    animals.forEach(animal => {
+        const lastCalving = new Date(animal.lastCalving);
+        const del = Math.floor((today - lastCalving) / (1000 * 60 * 60 * 24));
+
+        if (del >= 305) {
+            alerts.push({
+                type: 'secagem',
+                message: `Vaca ${animal.animalId}: Iniciar Secagem (DEL ${del} dias)`
+            });
+        } else if (del >= 280) {
+            alerts.push({
+                type: 'alerta',
+                message: `Vaca ${animal.animalId}: Próxima da Secagem (${305 - del} dias rest.)`
+            });
+        }
+
+        if (animal.insemination) {
+            const insDate = new Date(animal.insemination);
+            const calvingDate = new Date(insDate);
+            calvingDate.setDate(insDate.getDate() + 283);
+            const daysToParto = Math.floor((calvingDate - today) / (1000 * 60 * 60 * 24));
+
+            if (daysToParto <= 15 && daysToParto >= 0) {
+                alerts.push({
+                    type: 'parto',
+                    message: `Vaca ${animal.animalId}: Parto previsto em ${daysToParto} dias!`
+                });
+            }
+        }
+    });
+
+    if (alerts.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = 'block';
+    alerts.forEach(alert => {
+        const div = document.createElement('div');
+        div.className = 'dashboard-alert-item';
+        div.style.borderLeftColor = alert.type === 'parto' ? 'var(--color-income)' : '#ed8936';
+        div.innerHTML = `<span><strong>Manejo:</strong> ${alert.message}</span>`;
+        list.appendChild(div);
+    });
+};
+
+/* ==========================================================================
    4. PERFIL
    ========================================================================== */
 window.loadProfile = () => {
@@ -1865,6 +2131,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnNewIncomeTab) btnNewIncomeTab.addEventListener('click', () => openModal('income'));
     if (btnNewExpenseTab) btnNewExpenseTab.addEventListener('click', () => openModal('expense'));
     if (btnCancel) btnCancel.addEventListener('click', closeModal);
+
+    // Módulo Rebanho Events
+    const btnNewAnimal = document.getElementById('btn-new-animal');
+    const btnCancelAnimal = document.getElementById('btn-cancel-animal');
+    const animalForm = document.getElementById('animal-form');
+
+    if (btnNewAnimal) btnNewAnimal.addEventListener('click', openAnimalModal);
+    if (btnCancelAnimal) btnCancelAnimal.addEventListener('click', closeAnimalModal);
+    if (animalForm) animalForm.addEventListener('submit', saveAnimal);
 
     // Fechar Modal Clicando Fora e ESC
     const modal = document.getElementById('modal');
