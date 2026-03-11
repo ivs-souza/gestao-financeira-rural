@@ -14,7 +14,7 @@
 }
 
 .app-header {
-    display: flex;
+    display: none !important; /* Forces hide on login screen */
     justify-content: space-between;
     align-items: center;
     padding: 0 1.5rem;
@@ -127,12 +127,16 @@ body {
     color: var(--color-text);
     line-height: 1.5;
     padding: 2rem;
-    padding-top: 0; /* Sticky header handles flow */
-    padding-bottom: calc(100px + env(safe-area-inset-bottom)); /* Espaço para o menu inferior e Safe Area do iOS */
+    padding-top: 0; 
+    padding-bottom: 0; /* Default no padding for login */
     display: flex;
     justify-content: center;
     min-height: 100vh;
     transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.is-logged-in {
+    padding-bottom: env(safe-area-inset-bottom); /* Safe area only when logged in */
 }
 
 .app-container {
@@ -147,6 +151,15 @@ body {
 
 .tab-content.active {
     display: block;
+    overflow-y: auto; /* Garante que o conteúdo possa rolar até o fim */
+}
+
+.bottom-spacer {
+    height: 120px !important;
+    width: 100%;
+    display: block;
+    clear: both;
+    pointer-events: none; /* Não captura cliques indesejados */
 }
 
 @keyframes fadeIn {
@@ -162,13 +175,13 @@ body {
 }
 
 .bottom-nav {
+    display: none; /* Hidden by default, JS shows it on login */
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
     background: white;
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
-    display: flex;
     justify-content: space-around;
     padding: 0.8rem 0;
     padding-bottom: calc(0.8rem + env(safe-area-inset-bottom)); /* Keep nav items above iPhone bar */
@@ -762,14 +775,13 @@ button {
     /* Mudaremos para 'none' via JS após cadastro */
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 99999; /* Top absolute priority */
 }
 
 .auth-modal {
     background: white;
     padding: 2.5rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
+    border: 2px solid #ddd; /* Simpler border for safe testing */
     text-align: center;
     max-width: 400px;
     width: 90%;

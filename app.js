@@ -331,9 +331,9 @@ const updateDashboard = () => {
         const balanceCard = totalBalanceEl.closest('.card');
         if (balanceCard) {
             if (balance < 0) {
-                balanceCard.style.background = 'linear-gradient(135deg, var(--color-expense) 0%, #c62828 100%)';
+                balanceCard.style.setProperty('background', 'linear-gradient(135deg, var(--color-expense) 0%, #c62828 100%)', 'important');
             } else {
-                balanceCard.style.background = 'linear-gradient(135deg, var(--color-income) 0%, #2e7d32 100%)';
+                balanceCard.style.setProperty('background', 'linear-gradient(135deg, var(--color-income) 0%, #2e7d32 100%)', 'important');
             }
         }
 
@@ -1166,7 +1166,14 @@ window.renderTransactions = () => {
                 hasExpense = true;
             });
         }
-    }
+    // Espaçador resiliente para evitar sobreposição do menu inferior
+    [tlResumo, tlEntradas, tlSaidas].forEach(el => {
+        if (el && el.innerHTML !== emptyMsg) {
+            const spacer = document.createElement('div');
+            spacer.className = 'bottom-spacer';
+            el.appendChild(spacer);
+        }
+    });
 };
 
 /* ==========================================================================
@@ -1424,6 +1431,11 @@ window.renderAnimals = () => {
     if (totalAnimalsEl) totalAnimalsEl.textContent = animals.length;
     if (totalLactatingEl) totalLactatingEl.textContent = countLactating;
     if (totalDryEl) totalDryEl.textContent = countDry;
+
+    // Espaçador resiliente para evitar sobreposição do menu inferior
+    const spacer = document.createElement('div');
+    spacer.className = 'bottom-spacer';
+    list.appendChild(spacer);
 };
 
 window.saveAnimal = async (e) => {
@@ -1862,11 +1874,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 globalUserId = user.uid;
                 if (firebaseAuthScreen) firebaseAuthScreen.style.display = 'none';
                 
-                // Mostra Dashboard se escondido
-                const appContainer = document.querySelector('.app-container');
+                const appHeader = document.querySelector('.app-header');
                 const bottomNav = document.querySelector('.bottom-nav');
-                if (appContainer) appContainer.style.display = 'block';
-                if (bottomNav) bottomNav.style.display = 'flex';
+                const appContainer = document.querySelector('.app-container');
+                
+                if (appHeader) appHeader.style.setProperty('display', 'flex', 'important');
+                if (bottomNav) bottomNav.style.setProperty('display', 'flex', 'important');
+                if (appContainer) appContainer.style.setProperty('display', 'block', 'important');
+                document.body.classList.add('is-logged-in'); // Enable app padding
 
                 // Verifica se já fez o "Welcome" (setup inicial)
                 const profileRef = window.firebaseDocWrapper(window.firebaseDb, 'users', user.uid);
@@ -1904,10 +1919,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (firebaseAuthScreen) firebaseAuthScreen.style.display = 'flex';
                 if (authScreenOriginal) authScreenOriginal.style.display = 'none';
                 
-                const appContainer = document.querySelector('.app-container');
+                const appHeader = document.querySelector('.app-header');
                 const bottomNav = document.querySelector('.bottom-nav');
-                if (appContainer) appContainer.style.display = 'none'; // Esconder Dashboard
+                const appContainer = document.querySelector('.app-container');
+                
+                if (appHeader) appHeader.style.display = 'none';
                 if (bottomNav) bottomNav.style.display = 'none';
+                if (appContainer) appContainer.style.display = 'none';
+                document.body.classList.remove('is-logged-in'); // Disable app padding
 
                 const fbAuthForm = document.getElementById('firebase-auth-form');
                 if (fbAuthForm) fbAuthForm.reset();
