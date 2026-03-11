@@ -1,29 +1,52 @@
 :root {
-    /* Requested dynamic colors */
-    --color-income: #50C878; /* Emerald Green */
-    --color-expense: #e53e3e; /* Standard Red for better contrast */
+    /* Agro-Tech Colors */
+    --color-income: #00E676; /* Neon Green */
+    --color-expense: #FF5252; /* Vibrant Red */
 
-    /* Additional variables */
+    /* UI Variables */
     --color-bg: #f4f7f6;
     --color-card: #ffffff;
-    --color-text: #2d3748;
-    --color-text-light: #36454F; /* Graphite Gray */
-    --font-family: 'Inter', system-ui, sans-serif;
+    --color-text: #121212;
+    --color-text-light: #546e7a;
+    --font-family: 'Inter', 'Poppins', system-ui, sans-serif;
     --border-radius: 16px;
-    --shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+    --shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
 }
 
-.logo-container { line-height: 1.1; letter-spacing: -0.5px; }
-.brand-lid { font-weight: 900; font-size: 1.6rem; color: #1B4332; }
-.brand-agro { font-weight: 200; font-size: 1.6rem; color: #333; }
-#farm-name-display { display: block; font-size: 0.8rem; color: #666; font-weight: 400; }
+.logo-container { line-height: 1; letter-spacing: -1px; }
+.brand-lid { 
+    font-weight: 900; 
+    font-size: 1.8rem; 
+    color: var(--color-income); 
+    display: inline-block;
+}
+.brand-agro { 
+    font-weight: 200; 
+    font-size: 1.8rem; 
+    color: var(--color-text); 
+    font-style: italic;
+}
+#farm-name-display { 
+    display: block; 
+    font-size: 0.65rem; 
+    color: var(--color-text); 
+    font-weight: 600; 
+    text-transform: uppercase; 
+    letter-spacing: 2px; 
+    opacity: 0.6;
+    margin-top: 2px;
+}
 
 .dark-mode {
-    --color-bg: #121212;
-    --color-card: #1e1e1e;
-    --color-text: #e0e0e0;
-    --color-text-light: #a0a0a0;
-    --shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    --color-bg: #0A0A0A;
+    --color-card: #141414;
+    --color-text: #FFFFFF;
+    --color-text-light: #94a3b8;
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.dark-mode .brand-lid {
+    text-shadow: 0 0 12px rgba(0, 230, 118, 0.4);
 }
 
 * {

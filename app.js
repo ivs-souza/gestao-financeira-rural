@@ -798,7 +798,7 @@ function renderComparisonChart(filteredData, textColor, gridColor) {
                 {
                     label: 'Faturamento',
                     data: [milkIncome, meatIncome],
-                    backgroundColor: 'rgb(0, 150, 0)', // Verde Original
+                    backgroundColor: '#00E676', // Neon Green
                     borderRadius: 6,
                     barPercentage: 0.8,
                     categoryPercentage: 0.7
@@ -806,7 +806,7 @@ function renderComparisonChart(filteredData, textColor, gridColor) {
                 {
                     label: 'Custos',
                     data: [milkExpense, meatExpense],
-                    backgroundColor: 'rgb(200, 0, 0)', // Vermelho Atenção
+                    backgroundColor: '#FF5252', // Vibrant Red
                     borderRadius: 6,
                     barPercentage: 0.8,
                     categoryPercentage: 0.7
