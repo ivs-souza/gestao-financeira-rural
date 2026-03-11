@@ -1,36 +1,46 @@
-# 🚜 Gestor Rural
+#🚜 Gestor Rural - White Paper Atualizado
+O braço direito do produtor na palma da mão.
 
-**O braço direito do produtor na palma da mão.**
+O Gestor Rural evoluiu de uma planilha digital para um ecossistema de gestão modular. Agora, ele atende tanto a Pecuária Leiteira quanto a Pecuária de Corte, funcionando como um aplicativo nativo no celular, mesmo sem internet.
 
-O **Gestor Rural** é um Web App focado na gestão financeira e produtiva de propriedades leiteiras. Desenvolvido para ser leve, rápido e funcional, ele transforma anotações de campo em indicadores estratégicos.
+🛠️ Funcionalidades Implementadas (v2.0)
+📱 Mobilidade e Acesso (NOVO!)
 
----
+PWA (Progressive Web App): Instalável no Android e iPhone com ícone próprio.
 
-## 🛠️ Funcionalidades Implementadas
+Offline First: Funciona sem internet no curral; os dados são sincronizados via localStorage.
 
-### 📱 Interface e Navegação
-- **Navegação por Abas:** Alternância entre Resumo, Entradas, Saídas e Perfil.
-- **Dark Mode Nativo:** Conforto visual para uso em qualquer iluminação.
-- **Mobile First:** Totalmente responsivo para iPhone e Android.
+Mobile First: Interface otimizada para uso com uma mão durante a lida.
 
-### 💰 Gestão de Fluxo de Caixa
-- **Lançamentos Detalhados:** Registro de valores, categorias e fotos de comprovantes.
-- **Controle de Produção:** Registro de litros de leite vinculados às vendas.
-- **CRUD Completo:** Editar e excluir registros com recálculo instantâneo de saldos.
+🏗️ Arquitetura Modular (NOVO!)
 
-### 📊 Inteligência e Gráficos
-- **Dashboard Estratégico:** Saldo atual, total de entradas e saídas.
-- **Gráficos (Chart.js):** Visualização de gastos por categoria e evolução do preço do leite.
-- **Preço Médio por Litro:** Cálculo automático da margem real recebida.
+Módulo Leite: Foco em produção diária, preço por litro e qualidade.
 
-### 🎯 Metas e Alertas
-- **Simulador de Metas:** Barra de progresso para metas de lucro mensal.
-- **Sininho de Notificações:** Alertas de lançamentos retroativos e saldo negativo.
+Módulo Pecuária de Corte: Foco em ganho de peso, arroba e manejo de lote.
 
-### 📄 Relatórios e Segurança
-- **Exportação PDF:** Relatórios profissionais com marca d'água da fazenda.
-- **Backup JSON:** Exportação e importação de dados para segurança extra.
-- **Versionamento:** Totalmente controlado via Git/GitHub.
+Dashboard Consolidado: Visão global da saúde financeira da fazenda (Leite + Corte).
+
+💰 Gestão Financeira Inteligente
+
+Filtros de Período: Visualização por Mês, Trimestre, Ano ou histórico total.
+
+Segmentação Automática: Cada gasto ou ganho é vinculado à sua respectiva atividade.
+
+Categorias Inteligentes: Organização de despesas (Ração, Medicamentos, Manutenção).
+
+📍 Localização e Cadastro
+
+Integração API IBGE: Busca inteligente de Município e Estado para o perfil da fazenda.
+
+Boas-Vindas Personalizado: Fluxo de configuração inicial para novos usuários.
+
+📄 Relatórios e Segurança
+
+Exportação PDF: Relatórios profissionais para contabilidade ou sócios.
+
+Backup JSON: Segurança total para exportar e importar dados no seu MacBook.
+
+Controle de Versão: 100% versionado via Git para total rastreabilidade.
 
 ---
 
