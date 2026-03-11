@@ -796,18 +796,18 @@ function renderComparisonChart(filteredData, textColor, gridColor) {
             labels: ['Leite 🐄', 'Pecuária 🥩'],
             datasets: [
                 {
-                    label: 'Faturamento',
+                    label: '🟢 Faturamento',
                     data: [milkIncome, meatIncome],
-                    backgroundColor: '#4caf50', // Verde
-                    borderRadius: 4,
+                    backgroundColor: 'rgb(0, 150, 0)', // Verde Original
+                    borderRadius: 6,
                     barPercentage: 0.8,
                     categoryPercentage: 0.7
                 },
                 {
-                    label: 'Custos',
+                    label: '🔴 Custos',
                     data: [milkExpense, meatExpense],
-                    backgroundColor: 'var(--color-expense)', // Vermelho
-                    borderRadius: 4,
+                    backgroundColor: 'rgb(200, 0, 0)', // Vermelho Atenção
+                    borderRadius: 6,
                     barPercentage: 0.8,
                     categoryPercentage: 0.7
                 }
