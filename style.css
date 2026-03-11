@@ -17,14 +17,19 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.25rem 1.5rem;
+    padding: 0.8rem 1.5rem;
     width: 100%;
+    max-width: 600px;
     box-sizing: border-box;
-    background-color: var(--color-bg);
-    position: sticky;
+    background-color: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    position: fixed;
     top: 0;
-    z-index: 100;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
 }
 
@@ -62,7 +67,8 @@
 
 .dark-mode .app-header {
     box-shadow: none;
-    border-bottom: 1px solid #1A1A1A;
+    background-color: rgba(10, 10, 10, 0.75);
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
 }
 
 .dark-mode .brand-lid {
@@ -93,6 +99,7 @@ body {
     color: var(--color-text);
     line-height: 1.5;
     padding: 2rem;
+    padding-top: 6rem;
     padding-bottom: calc(120px + env(safe-area-inset-bottom, 20px)); /* Support for iOS Safe Area */
     display: flex;
     justify-content: center;
