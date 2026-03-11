@@ -1389,6 +1389,7 @@ window.renderAnimals = () => {
             </div>
             
             <div style="display: flex; gap: 10px; margin-top: 10px; justify-content: flex-end;">
+                <button onclick="editAnimal('${animal.id}')" style="background: transparent; color: var(--color-income); padding: 5px; font-size: 0.8rem; border: 1px solid var(--color-income); border-radius: 4px;">Editar</button>
                 <button onclick="deleteAnimal('${animal.id}')" style="background: transparent; color: var(--color-expense); padding: 5px; font-size: 0.8rem; border: 1px solid var(--color-expense); border-radius: 4px;">Excluir</button>
             </div>
         `;
@@ -1464,8 +1465,28 @@ window.deleteAnimal = async (id) => {
     }
 };
 
+window.editAnimal = (id) => {
+    const animal = animals.find(a => a.id === id);
+    if (!animal) return;
+
+    // Abrir o modal
+    const modal = document.getElementById('animal-modal');
+    if (modal) modal.classList.add('active');
+
+    // Preencher campos
+    document.getElementById('animal-id').value = animal.animalId || '';
+    document.getElementById('animal-name').value = animal.name || '';
+    document.getElementById('animal-breed').value = animal.breed || '';
+    document.getElementById('animal-last-calving').value = animal.lastCalving || '';
+    document.getElementById('animal-insemination').value = animal.insemination || '';
+
+    animalEditId = id;
+};
+
 window.openAnimalModal = () => {
     const modal = document.getElementById('animal-modal');
+    const form = document.getElementById('animal-form');
+    if (form) form.reset();
     if (modal) modal.classList.add('active');
     animalEditId = null;
 };
