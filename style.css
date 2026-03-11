@@ -290,6 +290,144 @@ button {
     color: var(--color-expense);
 }
 
+/* Animal Cards */
+.animal-card {
+    display: flex;
+    flex-direction: column;
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s ease;
+}
+
+.animal-card:hover {
+    background-color: #fafafa;
+}
+
+.dark-mode .animal-card:hover {
+    background-color: #2a2a2a;
+}
+
+.animal-card:last-child {
+    border-bottom: none;
+}
+
+.animal-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
+}
+
+.animal-info {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.animal-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #f0f4f8;
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    border: 1px solid #e2e8f0;
+}
+
+.dark-mode .animal-avatar {
+    background: #2d3748;
+    border-color: #4a5568;
+}
+
+.animal-name {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--color-text);
+}
+
+.animal-breed {
+    font-size: 0.8rem;
+    color: var(--color-text-light);
+}
+
+.status-tag {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.3rem 0.6rem;
+    border-radius: 12px;
+}
+
+.status-lactacao {
+    background: rgba(0, 150, 0, 0.1);
+    color: var(--color-income);
+}
+
+.status-secagem {
+    background: rgba(255, 165, 0, 0.1);
+    color: #ed8936;
+}
+
+.status-seca {
+    background: rgba(200, 0, 0, 0.1);
+    color: var(--color-expense);
+}
+
+.status-novilha {
+    background: rgba(50, 50, 200, 0.1);
+    color: #3182ce;
+}
+
+.lactation-progress-container {
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+.lactation-progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--color-text-light);
+    margin-bottom: 0.3rem;
+    font-weight: 500;
+}
+
+.lactation-progress-bar-bg {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.dark-mode .lactation-progress-bar-bg {
+    background: #4a5568;
+}
+
+.lactation-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease, background-color 0.5s ease;
+}
+
+.animal-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+    background: #f8fafc;
+    padding: 0.8rem;
+    border-radius: 8px;
+}
+
+.dark-mode .animal-details {
+    background: #2d3748;
+}
+
 /* Modal styles */
 .modal-overlay {
     position: fixed;

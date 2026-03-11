@@ -333,6 +333,21 @@
             </div>
             <!-- FIM DA ABA DE MERCADO -->
 
+            <!-- ALERTAS DE MANEJO -->
+            <div id="dashboard-manejo-alerts-section" style="margin-bottom: 2rem; display: none;">
+                <h4 style="font-size: 0.9rem; color: var(--color-expense); font-weight: 600; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.4rem;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    Alertas de Manejo
+                </h4>
+                <div id="dashboard-manejo-alerts-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <!-- Alertas injetados aqui via JS -->
+                </div>
+            </div>
+
 
             <!-- PROJECTION CARD -->
             <div id="projection-card" class="card projection-card" style="display: none; margin-bottom: 1.5rem;">
@@ -502,6 +517,39 @@
             </form>
         </div>
 
+        <div id="tab-rebanho" class="tab-content" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="font-size: 1.5rem; color: var(--color-text);">Rebanho</h2>
+            </div>
+            
+            <div class="dashboard" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 1.5rem;">
+                <div class="card" style="grid-column: span 2; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; display: flex; flex-direction: column; align-items: center; padding: 1.5rem 1rem;">
+                    <h2 style="color: rgba(255,255,255,0.9); font-size: 1rem; margin-bottom: 0.5rem;">Total de Fêmeas</h2>
+                    <div class="amount" id="total-animals" style="font-size: 2.2rem; font-weight: 800; color: white;">0</div>
+                </div>
+                <div class="card" style="display: flex; flex-direction: column; align-items: center; text-align: center; border: 2px solid var(--color-income);">
+                    <h2 style="font-size: 0.85rem;">Em Lactação</h2>
+                    <div class="amount" id="total-lactating" style="font-size: 1.5rem; color: var(--color-income);">0</div>
+                </div>
+                <div class="card" style="display: flex; flex-direction: column; align-items: center; text-align: center; border: 2px solid #ed8936;">
+                    <h2 style="font-size: 0.85rem;">Secas</h2>
+                    <div class="amount" id="total-dry" style="font-size: 1.5rem; color: #ed8936;">0</div>
+                </div>
+            </div>
+
+            <button class="btn-income" id="btn-new-animal" style="width: 100%; margin-bottom: 1.5rem;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Novo Animal
+            </button>
+
+            <div class="transactions-list" id="animals-list" style="margin-bottom: 2rem;">
+                <!-- Animal cards injected via JS -->
+            </div>
+        </div>
+
     </div> <!-- end app-container -->
 
     <nav class="bottom-nav">
@@ -529,6 +577,15 @@
                 <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
             <span>Saídas</span>
+        </a>
+        <a href="#" class="nav-item" data-target="tab-rebanho">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"></path>
+                <path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"></path>
+                <path d="M12 3v6"></path>
+            </svg>
+            <span>Rebanho</span>
         </a>
         <a href="#" class="nav-item" data-target="tab-perfil">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -681,6 +738,39 @@
                     <!-- Injetado via JS -->
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Animal Registration Modal -->
+    <div class="modal-overlay" id="animal-modal">
+        <div class="modal">
+            <h2 id="animal-modal-title">Novo Animal</h2>
+            <form id="animal-form">
+                <div class="form-group">
+                    <label for="animal-id">Brinco / Identificação</label>
+                    <input type="text" id="animal-id" placeholder="Ex: 001, Estrela..." required>
+                </div>
+                <div class="form-group">
+                    <label for="animal-name">Nome do Animal</label>
+                    <input type="text" id="animal-name" placeholder="Ex: Estrela">
+                </div>
+                <div class="form-group">
+                    <label for="animal-breed">Raça</label>
+                    <input type="text" id="animal-breed" placeholder="Ex: Holandesa">
+                </div>
+                <div class="form-group">
+                    <label for="animal-last-calving">Data do Último Parto</label>
+                    <input type="date" id="animal-last-calving" required>
+                </div>
+                <div class="form-group">
+                    <label for="animal-insemination">Data de Inseminação (Opcional)</label>
+                    <input type="date" id="animal-insemination">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" id="btn-cancel-animal">Cancelar</button>
+                    <button type="submit" class="btn-save" id="btn-save-animal">Salvar</button>
+                </div>
+            </form>
         </div>
     </div>
 
