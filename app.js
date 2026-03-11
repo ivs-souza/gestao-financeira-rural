@@ -796,7 +796,7 @@ function renderComparisonChart(filteredData, textColor, gridColor) {
             labels: ['Leite 🐄', 'Pecuária 🥩'],
             datasets: [
                 {
-                    label: '🟢 Faturamento',
+                    label: 'Faturamento',
                     data: [milkIncome, meatIncome],
                     backgroundColor: 'rgb(0, 150, 0)', // Verde Original
                     borderRadius: 6,
@@ -804,7 +804,7 @@ function renderComparisonChart(filteredData, textColor, gridColor) {
                     categoryPercentage: 0.7
                 },
                 {
-                    label: '🔴 Custos',
+                    label: 'Custos',
                     data: [milkExpense, meatExpense],
                     backgroundColor: 'rgb(200, 0, 0)', // Vermelho Atenção
                     borderRadius: 6,
@@ -1621,7 +1621,8 @@ window.loadProfile = () => {
             if (profNome && profile.nome !== undefined) profNome.value = profile.nome;
             if (profPropriedade && profile.propriedade !== undefined) {
                 profPropriedade.value = profile.propriedade;
-                if (headerTitle) headerTitle.textContent = `Fazenda: ${profile.propriedade}`;
+                const farmDisplay = document.getElementById('farm-name-display');
+                if (farmDisplay) farmDisplay.textContent = profile.propriedade;
             }
             if (profCpf && profile.cpf !== undefined) profCpf.value = profile.cpf;
             if (profIe && profile.ie !== undefined) profIe.value = profile.ie;
