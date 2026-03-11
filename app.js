@@ -94,9 +94,9 @@ async function loadFirebaseData(userId) {
         animals = loadedAnimals;
 
         // Atualizar interface
-        const headerTitle = document.querySelector('header h1');
         const savedUser = localStorage.getItem('rural_user');
-        if (savedUser && headerTitle) headerTitle.textContent = `Gestão: ${savedUser}`;
+        const farmDisplay = document.getElementById('farm-name-display');
+        if (savedUser && farmDisplay) farmDisplay.textContent = savedUser;
 
         updateDashboard();
         renderTransactions();
@@ -1614,7 +1614,6 @@ window.loadProfile = () => {
         const profSegmento = document.getElementById('prof-segmento');
         const profGoal = document.getElementById('prof-goal');
         const profMilkTarget = document.getElementById('prof-milk-target');
-        const headerTitle = document.querySelector('header h1');
 
         if (profileStr) {
             const profile = JSON.parse(profileStr);
@@ -1639,7 +1638,8 @@ window.loadProfile = () => {
 
         } else if (oldUser) {
             if (profPropriedade) profPropriedade.value = oldUser;
-            if (headerTitle) headerTitle.textContent = `Gestão: ${oldUser}`;
+            const farmDisplay = document.getElementById('farm-name-display');
+            if (farmDisplay) farmDisplay.textContent = oldUser;
         }
 
         const savedGoal = localStorage.getItem('rural_goal');
@@ -1853,7 +1853,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Firebase Auth Observer
     const authScreenOriginal = document.getElementById('auth-screen');
     const firebaseAuthScreen = document.getElementById('firebase-auth-screen');
-    const headerTitle = document.querySelector('header h1');
+    const recentFeed = document.getElementById('recent-feed');
     
     if (window.firebaseAuth && window.onAuthStateChangedWrapper) {
         window.onAuthStateChangedWrapper(window.firebaseAuth, (user) => {
@@ -1894,7 +1894,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.removeItem('rural_milk_target');
                 
                 // Limpar UI residual
-                if (headerTitle) headerTitle.textContent = 'Gestão Rural';
+                // No longer overwriting header title with static string
                 if (typeof updateDashboard === 'function') updateDashboard();
                 if (typeof renderTransactions === 'function') renderTransactions();
                 if (typeof renderMarket === 'function') renderMarket();
@@ -2141,7 +2141,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (milkTarget) localStorage.setItem('rural_milk_target', milkTarget);
                     else localStorage.removeItem('rural_milk_target');
 
-                    if (headerTitle) headerTitle.textContent = `Gestão: ${profile.propriedade}`;
+                    const farmDisplay = document.getElementById('farm-name-display');
+                    if (farmDisplay) farmDisplay.textContent = profile.propriedade;
                     
                     if(typeof window.addNotification === 'function') {
                         window.addNotification('Perfil salvo e sincronizado na nuvem com sucesso!', 'success');
