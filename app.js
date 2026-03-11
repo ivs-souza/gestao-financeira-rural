@@ -1,16 +1,11 @@
 /* ==========================================================================
    1. ESTADO GLOBAL E INICIALIZAÇÃO
    ========================================================================== */
-// Immediate welcome check
-(function () {
-    const hasSeenWelcome = localStorage.getItem('hasSeenWelcome') === 'true';
-    if (hasSeenWelcome) {
-        document.addEventListener('DOMContentLoaded', () => {
-            const authScreen = document.getElementById('auth-screen');
-            if (authScreen) authScreen.style.display = 'none';
-        });
-    }
-})();
+// Global User ID to track current authenticated session
+let globalUserId = null;
+
+// Removed immediate welcome check, Auth state observer will handle routing
+
 
 let transactions = [];
 let marketAlerts = [];
@@ -35,34 +30,65 @@ let photoBase64 = null;
 let editId = null;
 let transactionToDelete = null;
 
-// Lógica de Inicialização a ser chamada no carregamento
-function initData() {
-    const rawData = localStorage.getItem('rural_data');
-    if (rawData) {
-        transactions = JSON.parse(rawData);
-        // Garantindo que as datas são objetos Date
-        transactions = transactions.map(t => ({
-            ...t,
-            date: new Date(t.date)
-        }));
-    }
+// Lógica de Inicialização a ser chamada pós-auth
+async function loadFirebaseData(userId) {
+    try {
+        const db = window.firebaseDb;
+        const { doc, getDoc, collection, getDocs } = window;
+        
+        // 1. Carregar Perfil/Metadata principal
+        const profileRef = window.firebaseDocWrapper(db, 'users', userId);
+        const profileSnap = await window.firebaseGetDocWrapper(profileRef);
+        
+        if (profileSnap.exists()) {
+            const data = profileSnap.data();
+            
+            // Atribuir ao local profile backup (para o resto do app acessar sincronamente como se fosse localStorage)
+            localStorage.setItem('rural_profile', JSON.stringify(data.profile || {}));
+            localStorage.setItem('rural_user', data.profile?.propriedade || 'Usuário');
+            if (data.activeModule) localStorage.setItem('rural_active_module', data.activeModule);
+            if (data.goal) localStorage.setItem('rural_goal', data.goal);
+            if (data.milkTarget) localStorage.setItem('rural_milk_target', data.milkTarget);
+            
+            marketAlerts = data.alerts || [];
+            systemNotifications = data.notifications || [];
+            
+            // Theme setup
+            if (data.theme === 'dark') {
+                document.body.classList.add('dark-mode');
+                const themeBtn = document.getElementById('btn-theme-toggle');
+                if (themeBtn) themeBtn.textContent = '☀️';
+            }
+        }
 
-    const rawAlerts = localStorage.getItem('rural_alerts');
-    if (rawAlerts) {
-        marketAlerts = JSON.parse(rawAlerts);
-    }
+        // 2. Carregar Transações da subcoleção
+        const txsRef = window.firebaseCollectionWrapper(db, 'users', userId, 'transactions');
+        const txsSnap = await window.firebaseGetDocsWrapper(txsRef);
+        
+        const loadedTxs = [];
+        txsSnap.forEach((doc) => {
+            const tData = doc.data();
+            loadedTxs.push({
+                ...tData,
+                date: new Date(tData.dateStr) // Restore Date object
+            });
+        });
+        
+        // Sort by date descending
+        loadedTxs.sort((a, b) => b.date - a.date);
+        transactions = loadedTxs;
 
-    const rawNotifications = localStorage.getItem('rural_notifications');
-    if (rawNotifications) {
-        systemNotifications = JSON.parse(rawNotifications);
-    }
+        // Atualizar interface
+        const headerTitle = document.querySelector('header h1');
+        const savedUser = localStorage.getItem('rural_user');
+        if (savedUser && headerTitle) headerTitle.textContent = `Gestão: ${savedUser}`;
 
-    // Theme setup
-    const savedTheme = localStorage.getItem('rural_theme');
-    if (savedTheme === 'dark') {
-        document.body.classList.add('dark-mode');
-        const themeBtn = document.getElementById('btn-theme-toggle');
-        if (themeBtn) themeBtn.textContent = '☀️';
+        updateDashboard();
+        renderTransactions();
+        
+    } catch (error) {
+        console.error("Erro ao carregar dados do Firebase:", error);
+        window.addNotification("Erro de conexão ao baixar dados da nuvem.", "critical");
     }
 }
 
@@ -79,7 +105,15 @@ window.addNotification = (message, type = 'info') => {
     };
     systemNotifications.unshift(newNotif); // Add to beginning
     if (systemNotifications.length > 50) systemNotifications.pop(); // Keep max 50
-    localStorage.setItem('rural_notifications', JSON.stringify(systemNotifications));
+    
+    // Atualiza Firebase assincronamente (Fire & Forget)
+    if (globalUserId && window.firebaseDb) {
+        const db = window.firebaseDb;
+        window.firebaseSetDocWrapper(window.firebaseDocWrapper(db, 'users', globalUserId), {
+            notifications: systemNotifications
+        }, { merge: true }).catch(err => console.error("Erro salvando notificação", err));
+    }
+
     renderSystemNotifications();
 };
 
@@ -1468,36 +1502,95 @@ const closeReceiptViewer = () => {
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
 
-    // 1. Carregar dados das transações
-    initData();
-
-    // 2. Autenticação Simples
-    const authScreen = document.getElementById('auth-screen');
-    const authForm = document.getElementById('auth-form');
-    const userNameInput = document.getElementById('user-name');
+    // 1. Firebase Auth Observer
+    const authScreenOriginal = document.getElementById('auth-screen');
+    const firebaseAuthScreen = document.getElementById('firebase-auth-screen');
     const headerTitle = document.querySelector('header h1');
-    const savedUser = localStorage.getItem('rural_user');
-    const hasSeenWelcome = localStorage.getItem('hasSeenWelcome') === 'true';
-
-    if (hasSeenWelcome) {
-        if (authScreen) authScreen.style.display = 'none';
-        if (savedUser && headerTitle) headerTitle.textContent = `Gestão: ${savedUser}`;
-        showPage('tab-resumo');
-    } else {
-        if (authScreen) authScreen.style.display = 'flex';
+    
+    if (window.firebaseAuth && window.onAuthStateChangedWrapper) {
+        window.onAuthStateChangedWrapper(window.firebaseAuth, (user) => {
+            if (user) {
+                // Usuário logado
+                globalUserId = user.uid;
+                if (firebaseAuthScreen) firebaseAuthScreen.style.display = 'none';
+                
+                // Verifica se já fez o "Welcome" (setup inicial)
+                const profileRef = window.firebaseDocWrapper(window.firebaseDb, 'users', user.uid);
+                window.firebaseGetDocWrapper(profileRef).then(snap => {
+                    if (!snap.exists() || !snap.data().profile?.propriedade) {
+                        // Primeira vez logando, precisa definir o nome da fazenda
+                        if (authScreenOriginal) authScreenOriginal.style.display = 'flex';
+                    } else {
+                        if (authScreenOriginal) authScreenOriginal.style.display = 'none';
+                        loadFirebaseData(user.uid);
+                    }
+                });
+            } else {
+                // Não logado
+                globalUserId = null;
+                if (firebaseAuthScreen) firebaseAuthScreen.style.display = 'flex';
+                if (authScreenOriginal) authScreenOriginal.style.display = 'none';
+            }
+        });
     }
 
+    // Lógica do Form de Auth Firebase
+    const btnFbSignup = document.getElementById('btn-fb-signup');
+    const btnFbLogin = document.getElementById('btn-fb-login');
+    const authErrorMsg = document.getElementById('auth-error-message');
+    
+    const getAuthCredentials = () => {
+        const email = document.getElementById('fb-email').value.trim();
+        const pwd = document.getElementById('fb-password').value.trim();
+        if (authErrorMsg) authErrorMsg.style.display = 'none';
+        return { email, pwd };
+    };
+
+    if (btnFbLogin) {
+        btnFbLogin.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const { email, pwd } = getAuthCredentials();
+            if(!email || !pwd) return;
+            try {
+                await window.signInWrapper(window.firebaseAuth, email, pwd);
+            } catch (err) {
+                if(authErrorMsg) {
+                    authErrorMsg.textContent = "Erro ao entrar: " + err.message;
+                    authErrorMsg.style.display = 'block';
+                }
+            }
+        });
+    }
+
+    if (btnFbSignup) {
+        btnFbSignup.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const { email, pwd } = getAuthCredentials();
+            if(!email || !pwd) return;
+            try {
+                const userCred = await window.signUpWrapper(window.firebaseAuth, email, pwd);
+                // Criação do documento base
+                await window.firebaseSetDocWrapper(
+                    window.firebaseDocWrapper(window.firebaseDb, 'users', userCred.user.uid), 
+                    { created_at: new Date().toISOString() }
+                );
+            } catch (err) {
+                if(authErrorMsg) {
+                    authErrorMsg.textContent = "Erro ao cadastrar: " + err.message;
+                    authErrorMsg.style.display = 'block';
+                }
+            }
+        });
+    }
+
+    // 2. Setup Inicial (Welcome Screen original)
     const btnStartManage = document.getElementById('btn-start-manage');
+    const userNameInput = document.getElementById('user-name');
     if (btnStartManage) {
-        btnStartManage.addEventListener('click', (e) => {
+        btnStartManage.addEventListener('click', async (e) => {
             e.preventDefault();
             const name = userNameInput ? userNameInput.value.trim() : 'Minha Fazenda';
 
-            // 1- Correção do Submit e SetItem antes de UI change
-            localStorage.setItem('hasSeenWelcome', 'true');
-            localStorage.setItem('rural_user', name);
-
-            // 3- Persistência do Perfil
             const initialProfile = {
                 nome: '',
                 propriedade: name,
@@ -1507,17 +1600,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 tipo: '',
                 segmento: 'Misto' // Atividade inicial
             };
-            localStorage.setItem('rural_profile', JSON.stringify(initialProfile));
-
-            if (headerTitle) headerTitle.textContent = `Gestão: ${name}`;
-            if (authScreen) authScreen.style.display = 'none';
-
-            // Debug Console
-            console.log('Dados salvos com sucesso, entrando no app...');
-
-            showPage('tab-resumo');
-            updateDashboard();
-            renderTransactions();
+            
+            if (globalUserId && window.firebaseDb) {
+                await window.firebaseSetDocWrapper(
+                    window.firebaseDocWrapper(window.firebaseDb, 'users', globalUserId), 
+                    { profile: initialProfile }, 
+                    { merge: true }
+                );
+                
+                if (authScreenOriginal) authScreenOriginal.style.display = 'none';
+                loadFirebaseData(globalUserId);
+                showPage('tab-resumo');
+            }
         });
     }
 
@@ -1640,23 +1734,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 segmento: profSegmento ? profSegmento.value : 'Misto'
             };
 
-            localStorage.setItem('rural_profile', JSON.stringify(profile));
-            if (profile.propriedade) localStorage.setItem('rural_user', profile.propriedade);
+            const goal = profGoal && profGoal.value ? profGoal.value : null;
+            const milkTarget = profMilkTarget && profMilkTarget.value ? profMilkTarget.value : null;
 
-            if (profGoal && profGoal.value) {
-                localStorage.setItem('rural_goal', profGoal.value);
+            if (globalUserId && window.firebaseDb) {
+                // Sincroniza via Firebase
+                window.firebaseSetDocWrapper(
+                    window.firebaseDocWrapper(window.firebaseDb, 'users', globalUserId),
+                    {
+                        profile: profile,
+                        goal: goal,
+                        milkTarget: milkTarget,
+                        activeModule: profile.segmento
+                    }, 
+                    { merge: true }
+                ).then(() => {
+                    // Atualiza cache local visual
+                    localStorage.setItem('rural_profile', JSON.stringify(profile));
+                    if (profile.propriedade) localStorage.setItem('rural_user', profile.propriedade);
+                    localStorage.setItem('rural_active_module', profile.segmento);
+                    
+                    if (goal) localStorage.setItem('rural_goal', goal);
+                    else localStorage.removeItem('rural_goal');
+                    
+                    if (milkTarget) localStorage.setItem('rural_milk_target', milkTarget);
+                    else localStorage.removeItem('rural_milk_target');
+
+                    if (headerTitle) headerTitle.textContent = `Gestão: ${profile.propriedade}`;
+                    
+                    if(typeof window.addNotification === 'function') {
+                        window.addNotification('Perfil salvo e sincronizado na nuvem com sucesso!', 'success');
+                    } else {
+                        alert('Perfil salvo com sucesso!');
+                    }
+                }).catch(err => {
+                    console.error("Erro salvando perfil:", err);
+                    alert("Erro ao salvar perfil: " + err.message);
+                });
             } else {
-                localStorage.removeItem('rural_goal');
+                alert("Erro: Faça login novamente para salvar o perfil na nuvem.");
             }
-
-            if (profMilkTarget && profMilkTarget.value) {
-                localStorage.setItem('rural_milk_target', profMilkTarget.value);
-            } else {
-                localStorage.removeItem('rural_milk_target');
-            }
-
-            if (headerTitle) headerTitle.textContent = `Fazenda: ${profile.propriedade}`;
-            alert('Perfil salvo com sucesso!');
 
             loadProfile();
             updateDashboard();
@@ -1667,11 +1784,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // Botão Sair
     const btnLogout = document.getElementById('btn-logout');
     if (btnLogout) {
-        btnLogout.addEventListener('click', () => {
-            if (confirm('Tem certeza que deseja sair ou trocar de usuário?')) {
+        btnLogout.addEventListener('click', async () => {
+            if (confirm('Tem certeza que deseja sair?')) {
+                // Limpar dados locais
                 localStorage.removeItem('rural_user');
                 localStorage.removeItem('rural_profile');
-                location.reload();
+                localStorage.removeItem('rural_active_module');
+                localStorage.removeItem('rural_goal');
+                localStorage.removeItem('rural_milk_target');
+                transactions = [];
+                marketAlerts = [];
+                systemNotifications = [];
+                
+                if (window.firebaseAuth) {
+                    try {
+                        await window.signOutWrapper(window.firebaseAuth);
+                        // Recarrega página inteira para limpar o DOM
+                        location.reload();
+                    } catch (err) {
+                        console.error('Logout error:', err);
+                    }
+                } else {
+                    location.reload();
+                }
             }
         });
     }
@@ -1720,11 +1855,12 @@ document.addEventListener('DOMContentLoaded', () => {
         btnConfirmDelete.addEventListener('click', () => {
             if (transactionToDelete !== null) {
                 transactions = transactions.filter(t => t.id !== transactionToDelete);
-                try {
-                    localStorage.setItem('rural_data', JSON.stringify(transactions));
-                } catch (err) {
-                    console.error('Erro ao salvar exclusão', err);
+                
+                if (globalUserId && window.firebaseDb) {
+                    const txRef = window.firebaseDocWrapper(window.firebaseDb, 'users', globalUserId, 'transactions', transactionToDelete.toString());
+                    window.firebaseDeleteDocWrapper(txRef).catch(err => console.error("Firebase delete tx error", err));
                 }
+
                 updateDashboard();
                 renderTransactions();
 
@@ -1854,20 +1990,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     photoData: photoBase64
                 };
 
-                // 3 - Preservação de Dados: garantir que o localStorage não foi modificado em outra aba e usar push correto
-                try {
-                    const storedRaw = localStorage.getItem('rural_data');
-                    if (storedRaw) {
-                        const parsed = JSON.parse(storedRaw);
-                        // Re-sync na memória local formatando as datas
-                        transactions = parsed.map(t => ({
-                            ...t,
-                            date: new Date(t.date)
-                        }));
-                    }
-                } catch (err) {
-                    console.error("Error parsing transactions from local storage before save", err);
-                }
+                // Remoção do sync retroativo de localStorage (usado para multiplas abas antigamente)
+                // O estado de 'transactions' em memória já é a fonte da verdade neste momento.
 
                 // 2 - Lógica Dupla (Salvar/Editar): Verificar o editingId (editId)
                 if (editId) {
@@ -1881,17 +2005,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     transactions.push(newTransaction);
                 }
 
-                // Salvar no storage
-                try {
-                    localStorage.setItem('rural_data', JSON.stringify(transactions));
-                } catch (err) {
-                    if (err.name === 'QuotaExceededError') {
-                        alert('Aviso: Armazenamento do navegador cheio. A imagem não foi salva.');
-                        newTransaction.photoData = null;
-                        localStorage.setItem('rural_data', JSON.stringify(transactions));
-                    } else {
-                        console.error("Error saving transactions to local storage", err);
-                    }
+                // Salvar no storage (Firebase)
+                if (globalUserId && window.firebaseDb) {
+                    // Prepara dados compatíveis com JSON
+                    const fbData = { ...newTransaction, dateStr: newTransaction.date.toISOString() };
+                    delete fbData.date; // Remover objeto Date para evitar conflitos de Timestamp
+
+                    const txRef = window.firebaseDocWrapper(window.firebaseDb, 'users', globalUserId, 'transactions', newTransaction.id.toString());
+                    
+                    window.firebaseSetDocWrapper(txRef, fbData).catch(err => {
+                        console.error("Erro salvando transação no Firebase:", err);
+                        if (err.code === 'resource-exhausted') {
+                             // Fallback for large images
+                            alert('Aviso: Imagem muito grande para salvar.');
+                        }
+                    });
                 }
 
                 // 4 - Gatilhos de Atualização
@@ -2140,7 +2268,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.removeAlert = (index) => {
         marketAlerts.splice(index, 1);
-        localStorage.setItem('rural_alerts', JSON.stringify(marketAlerts));
+        
+        if (globalUserId && window.firebaseDb) {
+            window.firebaseSetDocWrapper(window.firebaseDocWrapper(window.firebaseDb, 'users', globalUserId), {
+                alerts: marketAlerts
+            }, { merge: true }).catch(err => console.error("Firebase alert delete error", err));
+        } else {
+            localStorage.setItem('rural_alerts', JSON.stringify(marketAlerts));
+        }
 
         // Updates both modals and dashboard layout sync
         if (typeof renderActiveAlerts === 'function') renderActiveAlerts();
@@ -2211,7 +2346,14 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleNotificationDropdown();
         } else if (isClearAll) {
             systemNotifications = [];
-            localStorage.setItem('rural_notifications', JSON.stringify([]));
+            
+            if (globalUserId && window.firebaseDb) {
+                window.firebaseSetDocWrapper(window.firebaseDocWrapper(window.firebaseDb, 'users', globalUserId), {
+                    notifications: []
+                }, { merge: true }).catch(err => console.error("Firebase clear notes error", err));
+            } else {
+                localStorage.setItem('rural_notifications', JSON.stringify([]));
+            }
             renderSystemNotifications();
             toggleNotificationDropdown(true); // close
         } else if (!isDropdownClicked) {
@@ -2242,7 +2384,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             marketAlerts.push({ commodity, condition, target: targetVal });
-            localStorage.setItem('rural_alerts', JSON.stringify(marketAlerts));
+            
+            if (globalUserId && window.firebaseDb) {
+                window.firebaseSetDocWrapper(window.firebaseDocWrapper(window.firebaseDb, 'users', globalUserId), {
+                    alerts: marketAlerts
+                }, { merge: true }).catch(err => console.error("Firebase create alert error", err));
+            } else {
+                localStorage.setItem('rural_alerts', JSON.stringify(marketAlerts));
+            }
 
             alertForm.reset();
             toggleAlertModal(false);
@@ -2262,6 +2411,12 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 btnThemeToggle.textContent = '🌙';
                 localStorage.setItem('rural_theme', 'light');
+            }
+            
+            if (globalUserId && window.firebaseDb) {
+                window.firebaseSetDocWrapper(window.firebaseDocWrapper(window.firebaseDb, 'users', globalUserId), {
+                    theme: isDark ? 'dark' : 'light'
+                }, { merge: true }).catch(err => console.error("Firebase theme save error", err));
             }
         });
     }

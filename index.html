@@ -26,10 +26,72 @@
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-analytics.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA1-C_WwC0uecNK9bOv_ZZNIMn-H22gPFQ",
+            authDomain: "gestor-rural-3e5f1.firebaseapp.com",
+            projectId: "gestor-rural-3e5f1",
+            storageBucket: "gestor-rural-3e5f1.firebasestorage.app",
+            messagingSenderId: "228116388046",
+            appId: "1:228116388046:web:73ab19703cf8928f19989f",
+            measurementId: "G-V9N4Z62GLD"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        
+        // Export to window so app.js can use them
+        window.firebaseAuth = getAuth(app);
+        window.firebaseDb = getFirestore(app);
+        
+        window.onAuthStateChangedWrapper = onAuthStateChanged;
+        window.signInWrapper = signInWithEmailAndPassword;
+        window.signUpWrapper = createUserWithEmailAndPassword;
+        window.signOutWrapper = signOut;
+
+        window.firebaseDocWrapper = doc;
+        window.firebaseSetDocWrapper = setDoc;
+        window.firebaseGetDocWrapper = getDoc;
+        window.firebaseCollectionWrapper = collection;
+        window.firebaseGetDocsWrapper = getDocs;
+        window.firebaseDeleteDocWrapper = deleteDoc;
+    </script>
 </head>
 
 <body>
-    <div id="auth-screen" class="auth-overlay">
+    <!-- Auth Screen for Firebase -->
+    <div id="firebase-auth-screen" class="auth-overlay" style="display: flex; z-index: 10000; background-color: var(--color-bg);">
+        <div class="auth-modal" style="text-align: center;">
+            <h2>Login no Gestor Rural</h2>
+            <p style="margin-bottom: 20px;">Acesse sua conta para sincronizar seus dados.</p>
+            <form id="firebase-auth-form" onsubmit="return false;">
+                <div class="form-group" style="text-align: left;">
+                    <label for="fb-email">E-mail</label>
+                    <input type="email" id="fb-email" placeholder="seu@email.com" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #ddd; margin-top: 5px;">
+                </div>
+                <div class="form-group" style="text-align: left; margin-top: 15px;">
+                    <label for="fb-password">Senha</label>
+                    <input type="password" id="fb-password" placeholder="Sua senha" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #ddd; margin-top: 5px;">
+                </div>
+                <div id="auth-error-message" style="color: var(--color-expense); margin-top: 10px; font-size: 0.9rem; display: none;"></div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 25px;">
+                    <button type="button" class="btn-cancel" id="btn-fb-signup" style="flex: 1;">Cadastrar</button>
+                    <button type="submit" class="btn-save" id="btn-fb-login" style="flex: 1;">Entrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Original Welcome Screen (will be repurposed for first time setup after login) -->
+    <div id="auth-screen" class="auth-overlay" style="display: none;">
         <div class="auth-modal">
             <h2>Bem-vindo ao Gestor Rural</h2>
             <p>Para começar, como podemos chamar você ou sua propriedade?</p>
