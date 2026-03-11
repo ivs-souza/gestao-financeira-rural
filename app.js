@@ -1313,7 +1313,10 @@ window.renderAnimals = () => {
     const sortedAnimals = [...animals].sort((a,b) => (a.animalId || "").localeCompare(b.animalId || ""));
 
     sortedAnimals.forEach(animal => {
-        const lastCalving = new Date(animal.lastCalving);
+        const lastCalvingStr = animal.lastCalving.replace(/-/g, '/');
+        const lastCalving = new Date(lastCalvingStr);
+        lastCalving.setHours(0, 0, 0, 0);
+        
         const del = Math.floor((today - lastCalving) / (1000 * 60 * 60 * 24));
         
         let status = 'Novilha';
@@ -1340,7 +1343,10 @@ window.renderAnimals = () => {
         let nextCalvingDate = null;
         let daysToCalving = null;
         if (animal.insemination) {
-            const insDate = new Date(animal.insemination);
+            const insDateStr = animal.insemination.replace(/-/g, '/');
+            const insDate = new Date(insDateStr);
+            insDate.setHours(0, 0, 0, 0);
+            
             nextCalvingDate = new Date(insDate);
             nextCalvingDate.setDate(insDate.getDate() + 283);
             daysToCalving = Math.floor((nextCalvingDate - today) / (1000 * 60 * 60 * 24));
@@ -1453,7 +1459,6 @@ window.deleteAnimal = async (id) => {
         animals = animals.filter(a => a.id !== id);
         renderAnimals();
         updateDashboard();
-        window.addNotification("Animal removido do rebanho.", "info");
     } catch (error) {
         console.error("Erro ao excluir animal:", error);
     }
@@ -1484,7 +1489,10 @@ window.renderManejoAlerts = () => {
     today.setHours(0,0,0,0);
 
     animals.forEach(animal => {
-        const lastCalving = new Date(animal.lastCalving);
+        const lastCalvingStr = animal.lastCalving.replace(/-/g, '/');
+        const lastCalving = new Date(lastCalvingStr);
+        lastCalving.setHours(0, 0, 0, 0);
+
         const del = Math.floor((today - lastCalving) / (1000 * 60 * 60 * 24));
 
         // 1. Alerta de Secagem (DEL >= 305)
@@ -1505,7 +1513,10 @@ window.renderManejoAlerts = () => {
 
         // 3. Alerta de Pré-Parto (15 dias antes)
         if (animal.insemination) {
-            const insDate = new Date(animal.insemination);
+            const insDateStr = animal.insemination.replace(/-/g, '/');
+            const insDate = new Date(insDateStr);
+            insDate.setHours(0, 0, 0, 0);
+
             const calvingDate = new Date(insDate);
             calvingDate.setDate(insDate.getDate() + 283);
             const daysToParto = Math.floor((calvingDate - today) / (1000 * 60 * 60 * 24));
