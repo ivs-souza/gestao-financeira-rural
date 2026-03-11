@@ -45,7 +45,7 @@ body {
     color: var(--color-text);
     line-height: 1.5;
     padding: 2rem;
-    padding-bottom: 100px;
+    padding-bottom: calc(120px + env(safe-area-inset-bottom, 20px)); /* Support for iOS Safe Area */
     display: flex;
     justify-content: center;
     min-height: 100vh;
@@ -88,8 +88,14 @@ body {
     display: flex;
     justify-content: space-around;
     padding: 0.8rem 0;
+    padding-bottom: calc(0.8rem + env(safe-area-inset-bottom, 10px)); /* Keep nav items above iPhone bar */
     z-index: 50;
     border-top: 1px solid #eee;
+}
+
+.dark-mode .bottom-nav {
+    background: #1e1e1e;
+    border-top: 1px solid #333;
 }
 
 .bottom-nav .nav-item {
@@ -419,6 +425,25 @@ button {
 
 .btn-cancel:hover {
     background: #d0d0d0;
+    transform: translateY(-2px);
+}
+
+.btn-logout-styled {
+    width: 100%;
+    margin-top: 2rem;
+    padding: 1.2rem;
+    background: transparent;
+    color: var(--color-expense);
+    border: 2px solid var(--color-expense);
+    font-size: 1.1rem;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-logout-styled:hover {
+    background: rgba(200, 0, 0, 0.05);
     transform: translateY(-2px);
 }
 
