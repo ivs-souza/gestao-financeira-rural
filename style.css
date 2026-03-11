@@ -128,7 +128,7 @@ body {
     line-height: 1.5;
     padding: 2rem;
     padding-top: 0; /* Sticky header handles flow */
-    padding-bottom: calc(120px + env(safe-area-inset-bottom, 20px)); /* Support for iOS Safe Area */
+    padding-bottom: calc(100px + env(safe-area-inset-bottom)); /* Espaço para o menu inferior e Safe Area do iOS */
     display: flex;
     justify-content: center;
     min-height: 100vh;
@@ -171,8 +171,8 @@ body {
     display: flex;
     justify-content: space-around;
     padding: 0.8rem 0;
-    padding-bottom: calc(0.8rem + env(safe-area-inset-bottom, 10px)); /* Keep nav items above iPhone bar */
-    z-index: 50;
+    padding-bottom: calc(0.8rem + env(safe-area-inset-bottom)); /* Keep nav items above iPhone bar */
+    z-index: 1500;
     border-top: 1px solid #eee;
 }
 
