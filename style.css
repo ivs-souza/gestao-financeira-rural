@@ -428,19 +428,21 @@ button {
     transform: translateY(-2px);
 }
 
-.profile-actions-container {
-    display: flex;
-    gap: 10px;
-    margin-top: 2rem;
-    margin-bottom: 120px;
+.profile-actions {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 10px !important;
+    margin-top: 2rem !important;
+    margin-bottom: 120px !important;
+    width: 100% !important;
 }
 
-.profile-actions-container .btn-save,
-.profile-actions-container .btn-logout-styled {
-    flex: 1;
-    margin-top: 0;
-    padding: 1.2rem;
-    font-size: 1.1rem;
+.profile-actions button {
+    flex: 1 !important;
+    width: auto !important;
+    margin-top: 0 !important;
+    padding: 1.2rem !important;
+    font-size: 1.1rem !important;
 }
 
 .btn-logout-styled {
