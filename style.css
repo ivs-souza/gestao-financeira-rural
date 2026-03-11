@@ -428,18 +428,32 @@ button {
     transform: translateY(-2px);
 }
 
-.btn-logout-styled {
-    width: 100%;
+.profile-actions-container {
+    display: flex;
+    gap: 10px;
     margin-top: 2rem;
+    margin-bottom: 120px;
+}
+
+.profile-actions-container .btn-save,
+.profile-actions-container .btn-logout-styled {
+    flex: 1;
+    margin-top: 0;
     padding: 1.2rem;
+    font-size: 1.1rem;
+}
+
+.btn-logout-styled {
     background: transparent;
     color: var(--color-expense);
     border: 2px solid var(--color-expense);
-    font-size: 1.1rem;
     border-radius: var(--border-radius);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-logout-styled:hover {
