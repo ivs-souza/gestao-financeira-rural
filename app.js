@@ -96,7 +96,9 @@ async function loadFirebaseData(userId) {
         // Atualizar interface
         const savedUser = localStorage.getItem('rural_user');
         const farmDisplay = document.getElementById('farm-name-display');
-        if (savedUser && farmDisplay) farmDisplay.textContent = savedUser;
+        if (farmDisplay) {
+            farmDisplay.textContent = savedUser || ''; // Safety check: if no user name, show empty
+        }
 
         updateDashboard();
         renderTransactions();
@@ -1166,14 +1168,7 @@ window.renderTransactions = () => {
                 hasExpense = true;
             });
         }
-    // Espaçador resiliente para evitar sobreposição do menu inferior
-    [tlResumo, tlEntradas, tlSaidas].forEach(el => {
-        if (el && el.innerHTML !== emptyMsg) {
-            const spacer = document.createElement('div');
-            spacer.className = 'bottom-spacer';
-            el.appendChild(spacer);
-        }
-    });
+    }
 };
 
 /* ==========================================================================
@@ -1431,11 +1426,6 @@ window.renderAnimals = () => {
     if (totalAnimalsEl) totalAnimalsEl.textContent = animals.length;
     if (totalLactatingEl) totalLactatingEl.textContent = countLactating;
     if (totalDryEl) totalDryEl.textContent = countDry;
-
-    // Espaçador resiliente para evitar sobreposição do menu inferior
-    const spacer = document.createElement('div');
-    spacer.className = 'bottom-spacer';
-    list.appendChild(spacer);
 };
 
 window.saveAnimal = async (e) => {
@@ -1865,9 +1855,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Firebase Auth Observer
     const authScreenOriginal = document.getElementById('auth-screen');
     const firebaseAuthScreen = document.getElementById('firebase-auth-screen');
-    const recentFeed = document.getElementById('recent-feed');
     
-    if (window.firebaseAuth && window.onAuthStateChangedWrapper) {
+    if (window.onAuthStateChangedWrapper && window.firebaseAuth) {
         window.onAuthStateChangedWrapper(window.firebaseAuth, (user) => {
             if (user) {
                 // Usuário logado
@@ -1878,9 +1867,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const bottomNav = document.querySelector('.bottom-nav');
                 const appContainer = document.querySelector('.app-container');
                 
-                if (appHeader) appHeader.style.setProperty('display', 'flex', 'important');
-                if (bottomNav) bottomNav.style.setProperty('display', 'flex', 'important');
-                if (appContainer) appContainer.style.setProperty('display', 'block', 'important');
+                if (appHeader) appHeader.style.display = 'flex';
+                if (bottomNav) bottomNav.style.display = 'flex';
+                if (appContainer) appContainer.style.display = 'block';
                 document.body.classList.add('is-logged-in'); // Enable app padding
 
                 // Verifica se já fez o "Welcome" (setup inicial)
@@ -1940,8 +1929,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const authErrorMsg = document.getElementById('auth-error-message');
     
     const getAuthCredentials = () => {
-        const email = document.getElementById('fb-email').value.trim();
-        const pwd = document.getElementById('fb-password').value.trim();
+        const emailEl = document.getElementById('fb-email');
+        const pwdEl = document.getElementById('fb-password');
+        const email = emailEl ? emailEl.value.trim() : '';
+        const pwd = pwdEl ? pwdEl.value.trim() : '';
         if (authErrorMsg) authErrorMsg.style.display = 'none';
         return { email, pwd };
     };
@@ -1952,7 +1943,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const { email, pwd } = getAuthCredentials();
             if(!email || !pwd) return;
             try {
-                await window.signInWrapper(window.firebaseAuth, email, pwd);
+                if (window.signInWrapper && window.firebaseAuth) {
+                    await window.signInWrapper(window.firebaseAuth, email, pwd);
+                } else {
+                    console.error("Firebase Auth not initialized yet.");
+                }
             } catch (err) {
                 if(authErrorMsg) {
                     authErrorMsg.textContent = "Erro ao entrar: " + err.message;
@@ -1968,12 +1963,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const { email, pwd } = getAuthCredentials();
             if(!email || !pwd) return;
             try {
-                const userCred = await window.signUpWrapper(window.firebaseAuth, email, pwd);
-                // Criação do documento base
-                await window.firebaseSetDocWrapper(
-                    window.firebaseDocWrapper(window.firebaseDb, 'users', userCred.user.uid), 
-                    { created_at: new Date().toISOString() }
-                );
+                if (window.signUpWrapper && window.firebaseAuth && window.firebaseDb) {
+                    const userCred = await window.signUpWrapper(window.firebaseAuth, email, pwd);
+                    await window.firebaseSetDocWrapper(
+                        window.firebaseDocWrapper(window.firebaseDb, 'users', userCred.user.uid), 
+                        { created_at: new Date().toISOString() }
+                    );
+                }
             } catch (err) {
                 if(authErrorMsg) {
                     authErrorMsg.textContent = "Erro ao cadastrar: " + err.message;
@@ -1984,6 +1980,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 2. Setup Inicial (Welcome Screen original)
+    // This can stay outside as it doesn't strictly depend on Firebase until the click
     const btnStartManage = document.getElementById('btn-start-manage');
     const userNameInput = document.getElementById('user-name');
     if (btnStartManage) {

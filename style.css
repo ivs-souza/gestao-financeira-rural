@@ -14,7 +14,7 @@
 }
 
 .app-header {
-    display: none !important; /* Forces hide on login screen */
+    display: none; /* Hidden by default, JS shows it on login */
     justify-content: space-between;
     align-items: center;
     padding: 0 1.5rem;
@@ -135,10 +135,6 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-body.is-logged-in {
-    padding-bottom: env(safe-area-inset-bottom); /* Safe area only when logged in */
-}
-
 .app-container {
     max-width: 600px;
     width: 100%;
@@ -151,16 +147,8 @@ body.is-logged-in {
 
 .tab-content.active {
     display: block;
-    overflow-y: auto; /* Garante que o conteúdo possa rolar até o fim */
 }
 
-.bottom-spacer {
-    height: 120px !important;
-    width: 100%;
-    display: block;
-    clear: both;
-    pointer-events: none; /* Não captura cliques indesejados */
-}
 
 @keyframes fadeIn {
     from {
@@ -772,10 +760,8 @@ button {
     height: 100%;
     background: var(--color-bg);
     display: flex;
-    /* Mudaremos para 'none' via JS após cadastro */
     align-items: center;
     justify-content: center;
-    z-index: 99999; /* Top absolute priority */
 }
 
 .auth-modal {
