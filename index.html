@@ -32,7 +32,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-analytics.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { getFirestore, enableIndexedDbPersistence, doc, setDoc, getDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA1-C_WwC0uecNK9bOv_ZZNIMn-H22gPFQ",
@@ -62,6 +62,7 @@
         window.firebaseCollectionWrapper = collection;
         window.firebaseGetDocsWrapper = getDocs;
         window.firebaseDeleteDocWrapper = deleteDoc;
+        window.enableIndexedDbPersistenceWrapper = enableIndexedDbPersistence;
     </script>
 </head>
 

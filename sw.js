@@ -1,17 +1,24 @@
-const CACHE_NAME = 'gestor-rural-v1';
+const CACHE_NAME = 'gestor-rural-v2';
 const ASSETS = [
     './',
     './index.html',
     './style.css',
     './app.js',
     './icon.svg',
-    './manifest.json'
+    './manifest.json',
+    'https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js',
+    'https://www.gstatic.com/firebasejs/12.10.0/firebase-analytics.js',
+    'https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js',
+    'https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js'
 ];
 
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(ASSETS))
+            .then(cache => {
+                console.log('Cache aberto: ', CACHE_NAME);
+                return cache.addAll(ASSETS);
+            })
     );
 });
 

@@ -1502,6 +1502,21 @@ const closeReceiptViewer = () => {
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
 
+    // 0. Habilitar Persistência Offline do Firestore
+    if (window.firebaseDb && window.enableIndexedDbPersistenceWrapper) {
+        window.enableIndexedDbPersistenceWrapper(window.firebaseDb)
+            .then(() => {
+                console.log("Persistência Offline habilitada com sucesso. Os dados serão salvos localmente e sincronizados quando houver internet.");
+            })
+            .catch((err) => {
+                if (err.code == 'failed-precondition') {
+                    console.warn("Aviso: Múltiplas abas abertas. A persistência offline do Firestore só funciona em uma aba contínua.");
+                } else if (err.code == 'unimplemented') {
+                    console.warn("Aviso: O navegador não suporta a persistência offline do Firestore.");
+                }
+            });
+    }
+
     // 1. Firebase Auth Observer
     const authScreenOriginal = document.getElementById('auth-screen');
     const firebaseAuthScreen = document.getElementById('firebase-auth-screen');
