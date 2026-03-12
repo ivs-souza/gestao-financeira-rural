@@ -803,8 +803,23 @@ button {
 /* ==========================================================================
    HERD FILTERS & CHIPS
    ========================================================================== */
+.filter-chips {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+.filter-chips::-webkit-scrollbar {
+    display: none;
+}
+
 .herd-filters .chip {
-    padding: 0.5rem 1.2rem;
+    padding: 0.6rem 1.4rem;
     border-radius: 20px;
     background: #eef2f5;
     color: #546e7a;
@@ -812,22 +827,22 @@ button {
     font-weight: 600;
     border: none;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
     display: inline-block;
     height: auto;
     width: auto;
-    box-shadow: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
 .herd-filters .chip:hover {
     background: #e2e8f0;
-    transform: none;
 }
 
 .herd-filters .chip.active {
     background: var(--color-income);
-    color: white;
+    color: #000;
+    box-shadow: 0 4px 12px rgba(0, 230, 118, 0.3);
 }
 
 .dark-mode .herd-filters .chip {
@@ -838,6 +853,7 @@ button {
 .dark-mode .herd-filters .chip.active {
     background: var(--color-income);
     color: #000;
+    box-shadow: 0 4px 15px rgba(0, 230, 118, 0.4);
 }
 
 .search-box-wrapper input::placeholder {

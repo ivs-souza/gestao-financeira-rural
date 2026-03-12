@@ -1342,12 +1342,27 @@ window.renderAnimals = () => {
 
     // Apply SEARCH and CATEGORY filters
     const filteredAnimals = animals.filter(animal => {
-        const matchesSearch = !animalSearchQuery || 
+        const matchesSearch = !animalSearchQuery ||
             (animal.animalId && animal.animalId.toLowerCase().includes(animalSearchQuery.toLowerCase())) ||
             (animal.name && animal.name.toLowerCase().includes(animalSearchQuery.toLowerCase()));
-        
-        const matchesCategory = animalCategoryFilter === 'all' || animal.category === animalCategoryFilter;
-        
+
+        let matchesCategory = animalCategoryFilter === 'all';
+        if (!matchesCategory) {
+            if (animalCategoryFilter === 'Lactação' || animalCategoryFilter === 'Secas') {
+                const lastCalvingStr = animal.lastCalving ? animal.lastCalving.replace(/-/g, '/') : null;
+                const lastCalving = lastCalvingStr ? new Date(lastCalvingStr) : null;
+                const del = lastCalving ? Math.floor((today - lastCalving) / (1000 * 60 * 60 * 24)) : -1;
+
+                if (animalCategoryFilter === 'Lactação') {
+                    matchesCategory = (del >= 0 && del < 305);
+                } else {
+                    matchesCategory = (del >= 305);
+                }
+            } else {
+                matchesCategory = animal.category === animalCategoryFilter;
+            }
+        }
+
         return matchesSearch && matchesCategory;
     });
 
