@@ -545,6 +545,13 @@ button {
     box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
     transform: translateY(20px) scale(0.95);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    
+    /* Scroll & Height Fixes */
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+    padding-bottom: 120px; /* Safe space for nav bar */
+    display: flex;
+    flex-direction: column;
 }
 
 .modal-overlay.active .modal {
@@ -599,7 +606,7 @@ button {
 }
 
 .form-group {
-    margin-bottom: 1.2rem;
+    margin-bottom: 1.5rem; /* Increased for mobile comfort */
 }
 
 .form-group label {
