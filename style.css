@@ -938,9 +938,28 @@ button {
     transition: all 0.3s ease;
 }
 
-.fab-wrapper.active + .fab-overlay {
+#reproductive-fields, #bezerro-fields {
+    transition: all 0.3s ease-in-out;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+}
+
+#reproductive-fields.visible, #bezerro-fields.visible {
     opacity: 1;
-    visibility: visible;
+    max-height: 200px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.status-macho {
+    background-color: #4a5568 !important; /* Dark Gray */
+    color: white !important;
+}
+
+.status-bezerro {
+    background-color: #3182ce !important; /* Blue */
+    color: white !important;
 }
 
 /* ==========================================================================

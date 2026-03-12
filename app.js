@@ -1385,7 +1385,13 @@ window.renderAnimals = () => {
         let status = 'Novilha';
         let statusClass = 'status-novilha';
 
-        if (del >= 0) {
+        if (animal.category === 'Macho') {
+            status = 'Touro / Macho';
+            statusClass = 'status-macho'; // Need to add this class
+        } else if (animal.category === 'Bezerro') {
+            status = 'Bezerro(a)';
+            statusClass = 'status-bezerro'; // Need to add this class
+        } else if (del >= 0) {
             if (del < 305) {
                 status = 'Lactação';
                 statusClass = 'status-lactacao';
@@ -1405,7 +1411,7 @@ window.renderAnimals = () => {
         // Proximo Parto logic
         let nextCalvingDate = null;
         let daysToCalving = null;
-        if (animal.insemination) {
+        if (animal.insemination && animal.category === 'Fêmea') {
             const insDateStr = animal.insemination.replace(/-/g, '/');
             const insDate = new Date(insDateStr);
             insDate.setHours(0, 0, 0, 0);
@@ -1429,6 +1435,7 @@ window.renderAnimals = () => {
                 <div class="status-tag ${statusClass}">${status}</div>
             </div>
 
+            ${animal.category === 'Fêmea' ? `
             <div class="lactation-progress-container">
                 <div class="lactation-progress-labels">
                     <span>DEL: ${del >= 0 ? del : 0} dias</span>
@@ -1450,6 +1457,21 @@ window.renderAnimals = () => {
                     ${daysToCalving !== null ? `<br><small>(${daysToCalving} dias rest.)</small>` : ''}
                 </div>
             </div>
+            ` : animal.category === 'Bezerro' ? `
+            <div class="animal-details" style="grid-template-columns: 1fr;">
+                <div>
+                    <strong>Informações do Bezerro:</strong><br>
+                    Nascimento: ${animal.birthDate ? new Date(animal.birthDate.replace(/-/g, '/')).toLocaleDateString('pt-BR') : 'Não inf.'} | 
+                    Peso: ${animal.initialWeight ? animal.initialWeight + ' kg' : 'Não inf.'}
+                </div>
+            </div>
+            ` : `
+            <div class="animal-details" style="grid-template-columns: 1fr;">
+                 <div style="text-align: center; color: #666; font-style: italic; padding: 10px 0;">
+                    Animal destinado a reprodução ou corte (Macho).
+                </div>
+            </div>
+            `}
             
             <div style="display: flex; gap: 10px; margin-top: 10px; justify-content: flex-end;">
                 <button onclick="editAnimal('${animal.id}')" style="background: transparent; color: var(--color-income); padding: 5px; font-size: 0.8rem; border: 1px solid var(--color-income); border-radius: 4px; cursor: pointer;">Editar</button>
@@ -1472,11 +1494,17 @@ window.saveAnimal = async (e) => {
     const name = document.getElementById('animal-name').value.trim();
     const breed = document.getElementById('animal-breed').value.trim();
     const category = document.getElementById('animal-category').value;
-    const lastCalving = document.getElementById('animal-last-calving').value;
-    const insemination = document.getElementById('animal-insemination').value;
+    
+    // Reproductive fields
+    const lastCalving = document.getElementById('animal-last-calving').value || null;
+    const insemination = document.getElementById('animal-insemination').value || null;
+    
+    // Bezerro fields
+    const birthDate = document.getElementById('animal-birth-date').value || null;
+    const initialWeight = document.getElementById('animal-initial-weight').value || null;
 
-    if (!animalId || !lastCalving) {
-        alert("Brinco e Data de Parto são obrigatórios.");
+    if (!animalId) {
+        alert("O Brinco é obrigatório.");
         return;
     }
 
@@ -1486,7 +1514,9 @@ window.saveAnimal = async (e) => {
         breed,
         category,
         lastCalving,
-        insemination: insemination || null,
+        insemination,
+        birthDate,
+        initialWeight,
         updatedAt: new Date().toISOString()
     };
 
@@ -1545,6 +1575,16 @@ window.editAnimal = (id) => {
     document.getElementById('animal-category').value = animal.category || 'Fêmea';
     document.getElementById('animal-last-calving').value = animal.lastCalving || '';
     document.getElementById('animal-insemination').value = animal.insemination || '';
+    
+    // Campos Bezerro
+    if (document.getElementById('animal-birth-date')) {
+        document.getElementById('animal-birth-date').value = animal.birthDate || '';
+    }
+    if (document.getElementById('animal-initial-weight')) {
+        document.getElementById('animal-initial-weight').value = animal.initialWeight || '';
+    }
+
+    toggleAnimalFields(animal.category || 'Fêmea');
 
     animalEditId = id;
 };
@@ -1555,6 +1595,32 @@ window.openAnimalModal = () => {
     if (form) form.reset();
     if (modal) modal.classList.add('active');
     animalEditId = null;
+    toggleAnimalFields('Fêmea'); // Default reset logic
+};
+
+window.toggleAnimalFields = (category) => {
+    const reproFields = document.getElementById('reproductive-fields');
+    const bezerroFields = document.getElementById('bezerro-fields');
+    
+    if (!reproFields || !bezerroFields) return;
+
+    if (category === 'Fêmea') {
+        reproFields.classList.add('visible');
+        reproFields.style.display = 'block';
+        bezerroFields.classList.remove('visible');
+        bezerroFields.style.display = 'none';
+    } else if (category === 'Bezerro') {
+        reproFields.classList.remove('visible');
+        reproFields.style.display = 'none';
+        bezerroFields.classList.add('visible');
+        bezerroFields.style.display = 'block';
+    } else {
+        // Macho
+        reproFields.classList.remove('visible');
+        reproFields.style.display = 'none';
+        bezerroFields.classList.remove('visible');
+        bezerroFields.style.display = 'none';
+    }
 };
 
 window.closeAnimalModal = () => {
@@ -1576,6 +1642,8 @@ window.renderManejoAlerts = () => {
     today.setHours(0,0,0,0);
 
     animals.forEach(animal => {
+        if (!animal.lastCalving || animal.category !== 'Fêmea') return;
+
         const lastCalvingStr = animal.lastCalving.replace(/-/g, '/');
         const lastCalving = new Date(lastCalvingStr);
         lastCalving.setHours(0, 0, 0, 0);
@@ -2289,6 +2357,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnCancel) btnCancel.addEventListener('click', closeModal);
     if (btnCancelAnimal) btnCancelAnimal.addEventListener('click', closeAnimalModal);
     if (animalForm) animalForm.addEventListener('submit', saveAnimal);
+
+    const animalCategory = document.getElementById('animal-category');
+    if (animalCategory) {
+        animalCategory.addEventListener('change', (e) => {
+            toggleAnimalFields(e.target.value);
+        });
+    }
 
     // Fechar Modal Clicando Fora e ESC
     const modal = document.getElementById('modal');
