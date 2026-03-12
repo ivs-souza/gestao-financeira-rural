@@ -1813,16 +1813,25 @@ const openModal = (type) => {
         });
     }
 
+    const descLabel = document.querySelector('label[for="desc"]');
+    const btnSave = document.getElementById('btn-save');
+
     if (type === 'income') {
         if (modalTitle) {
-            modalTitle.textContent = 'Nova Entrada';
+            modalTitle.textContent = 'Registrar Receita';
             modalTitle.style.color = 'var(--color-income)';
         }
+        if (descLabel) descLabel.textContent = 'Descrição (ex: Venda de Leite, Venda de Bezerros, Arrendamento de Pasto)';
+        if (descInput) descInput.placeholder = 'Digite o que foi vendido ou recebido...';
+        if (btnSave) btnSave.textContent = 'Registrar Receita';
     } else {
         if (modalTitle) {
-            modalTitle.textContent = 'Nova Saída';
+            modalTitle.textContent = 'Registrar Gasto';
             modalTitle.style.color = 'var(--color-expense)';
         }
+        if (descLabel) descLabel.textContent = 'Descrição (ex: Compra de Ração, Vacinas, Conserto de Cerca, Diesel)';
+        if (descInput) descInput.placeholder = 'Digite o que foi comprado ou pago...';
+        if (btnSave) btnSave.textContent = 'Registrar Gasto';
     }
 
     const tSegLeite = document.getElementById('t_seg_leite');
