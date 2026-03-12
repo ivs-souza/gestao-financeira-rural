@@ -173,7 +173,7 @@ body {
     justify-content: space-around;
     padding: 0.8rem 0;
     padding-bottom: calc(0.8rem + env(safe-area-inset-bottom)); /* Keep nav items above iPhone bar */
-    z-index: 1500;
+    z-index: 9999; /* Increased for mobile layering */
     border-top: 1px solid #eee;
 }
 
@@ -547,9 +547,13 @@ button {
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     
     /* Scroll & Height Fixes */
-    max-height: 90vh !important;
+    height: auto !important;
+    max-height: 80vh !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch; /* Momentum scrolling on iOS */
+    touch-action: pan-y !important; /* Force vertical scroll on mobile */
+    position: relative;
+    z-index: 10001;
     padding-bottom: 120px; /* Safe space for nav bar */
     display: flex;
     flex-direction: column;
@@ -689,6 +693,9 @@ body.no-scroll {
     border-radius: var(--border-radius);
     font-weight: 600;
     cursor: pointer;
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 9999;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;

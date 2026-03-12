@@ -2307,7 +2307,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Botão Sair
     const btnLogout = document.getElementById('btn-logout');
     if (btnLogout) {
-        btnLogout.addEventListener('click', async (e) => {
+        const handleLogout = async (e) => {
             e.preventDefault();
             if (confirm('Tem certeza que deseja sair ou trocar de usuário?')) {
                 // 1- Função de Logout via Firebase
@@ -2325,7 +2325,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     location.reload();
                 }
             }
-        });
+        };
+
+        btnLogout.addEventListener('click', handleLogout);
+        btnLogout.addEventListener('touchend', handleLogout);
     }
 
     // Criar Transação / Animal via FAB (Botões Abrir Modal)
