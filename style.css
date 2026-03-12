@@ -530,19 +530,20 @@ button {
     height: 100dvh;
     height: -webkit-fill-available;
     background: rgba(0, 0, 0, 0.4);
-    display: flex;
+    display: none !important; /* Physically hide to prevent blocking */
     align-items: center;
     justify-content: center;
     opacity: 0;
-    pointer-events: none; /* Do not block header when hidden */
+    pointer-events: none;
     transition: opacity 0.3s ease;
     backdrop-filter: blur(5px);
-    z-index: 999999; /* Absolute top */
+    z-index: 999999;
 }
 
 .modal-overlay.active {
+    display: flex !important;
     opacity: 1;
-    pointer-events: auto; /* Enable touch when active */
+    pointer-events: auto;
 }
 
 .modal {
@@ -561,10 +562,14 @@ button {
     max-height: 85dvh !important;
     position: relative;
     z-index: 10001;
-    pointer-events: all !important;
+    pointer-events: none !important; /* Default off */
     display: flex;
     flex-direction: column;
-    padding-bottom: 0; /* Handled by internal container */
+    padding-bottom: 0;
+}
+
+.modal-overlay.active .modal {
+    pointer-events: all !important;
 }
 
 .modal-scroll-container {
@@ -1188,6 +1193,7 @@ body.no-scroll {
 
 #alert-modal {
     display: none !important;
+    pointer-events: none;
     position: fixed !important;
     top: 0;
     left: 0;
@@ -1201,6 +1207,7 @@ body.no-scroll {
 
 #alert-modal.active {
     display: flex !important;
+    pointer-events: auto;
 }
 
 /* Dashboard Alerts Style */

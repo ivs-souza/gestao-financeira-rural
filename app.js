@@ -17,6 +17,43 @@ let currentType = '';
 let currentFilter = 'all';
 let animalEditId = null;
 
+// ==========================================================================
+// MODAL REGISTRY - REAL CONDITIONAL RENDERING
+// ==========================================================================
+const modalRegistry = {};
+const initModalRegistry = () => {
+    const modalIds = ['modal', 'animal-modal', 'receipt-modal', 'delete-confirm-modal', 'alert-modal'];
+    modalIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            modalRegistry[id] = el;
+            el.remove(); // Physically remove from DOM at startup
+        }
+    });
+};
+
+const injectModal = (id) => {
+    const el = modalRegistry[id];
+    if (el && !document.getElementById(id)) {
+        document.body.appendChild(el);
+        return el;
+    }
+    return document.getElementById(id);
+};
+
+const ejectModal = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+        el.classList.remove('active');
+        // Wait for CSS transition (0.3s) before removal
+        setTimeout(() => {
+            if (!el.classList.contains('active')) {
+                el.remove();
+            }
+        }, 350);
+    }
+};
+
 // Referências globais para destruir gráficos anteriores ao re-renderizar
 let expensesChartInstance = null;
 let milkPriceChartInstance = null;
@@ -105,7 +142,7 @@ async function loadFirebaseData(userId) {
         updateDashboard();
         renderTransactions();
         renderAnimals();
-        
+
     } catch (error) {
         console.error("Erro ao carregar dados do Firebase:", error);
         window.addNotification("Erro de conexão ao baixar dados da nuvem.", "critical");
@@ -717,6 +754,9 @@ function renderSimulator(filteredData) {
 
 // Escutar sliders globals para recalcular na hora
 document.addEventListener('DOMContentLoaded', () => {
+    // 0. Initialize Modal Registry (Absolute Priority to prevent UI blockage)
+    initModalRegistry();
+
     const milkRange = document.getElementById('sim-milk-range');
     const costRange = document.getElementById('sim-cost-range');
 
@@ -1590,10 +1630,16 @@ window.editAnimal = (id) => {
 };
 
 window.openAnimalModal = () => {
-    const modal = document.getElementById('animal-modal');
+    const modal = injectModal('animal-modal');
+    if (!modal) return;
+    
     const form = document.getElementById('animal-form');
     if (form) form.reset();
-    if (modal) modal.classList.add('active');
+    
+    // Force direct display before adding class for transition
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('active'), 10);
+    
     document.body.classList.add('no-scroll');
     animalEditId = null;
     toggleAnimalFields('Fêmea'); // Default reset logic
@@ -1627,10 +1673,10 @@ window.toggleAnimalFields = (category) => {
 window.closeAnimalModal = () => {
     const modal = document.getElementById('animal-modal');
     const form = document.getElementById('animal-form');
-    if (modal) modal.classList.remove('active');
     document.body.classList.remove('no-scroll');
     if (form) form.reset();
     animalEditId = null;
+    ejectModal('animal-modal');
 };
 
 window.renderManejoAlerts = () => {
@@ -1772,17 +1818,14 @@ window.loadProfile = () => {
    ========================================================================== */
 const openModal = (type) => {
     currentType = type;
+    const modal = injectModal('modal');
+    if (!modal) return;
 
     const receiptPhotoInput = document.getElementById('receipt-photo');
     const receiptPreviewName = document.getElementById('receipt-preview-name');
     const dateInput = document.getElementById('date-input');
     const categoryInput = document.getElementById('category');
     const modalTitle = document.getElementById('modal-title');
-    const litersGroup = document.getElementById('liters-group');
-    const litersInput = document.getElementById('liters');
-    const headsGroup = document.getElementById('heads-group');
-    const headsInput = document.getElementById('heads');
-    const modal = document.getElementById('modal');
     const descInput = document.getElementById('desc');
 
     let currentSegment = 'Misto';
@@ -1793,7 +1836,6 @@ const openModal = (type) => {
     }
     const currentActiveModule = localStorage.getItem('rural_active_module') || 'Misto';
 
-    // Evaluate active context (if module is specifically selected, that rules, else profile rules)
     const contextSegment = currentActiveModule !== 'Misto' ? currentActiveModule : currentSegment;
 
     if (receiptPhotoInput) receiptPhotoInput.value = '';
@@ -1847,36 +1889,33 @@ const openModal = (type) => {
         }
     }
 
-    // Trigger visual update for Liters/Heads fields
     if (typeof window.updateModalInputs === 'function') {
         window.updateModalInputs();
     }
 
-    if (modal) modal.classList.add('active');
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('active'), 10);
     document.body.classList.add('no-scroll');
     setTimeout(() => { if (descInput) descInput.focus(); }, 100);
 };
 
 const closeModal = () => {
-    const modal = document.getElementById('modal');
     const form = document.getElementById('transaction-form');
-    const receiptPreviewName = document.getElementById('receipt-preview-name');
-
-    if (modal) modal.classList.remove('active');
     document.body.classList.remove('no-scroll');
     if (form) form.reset();
     currentType = '';
     photoBase64 = null;
     editId = null;
-    if (receiptPreviewName) receiptPreviewName.textContent = '';
+    ejectModal('modal');
 };
 
 // --- FUNÇÕES DE CRUD EM TEMPO DE EXECUÇÃO ---
 window.deleteTransaction = (id) => {
     transactionToDelete = id;
-    const modal = document.getElementById('delete-confirm-modal');
+    const modal = injectModal('delete-confirm-modal');
     if (modal) {
-        modal.classList.add('active');
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
         document.body.classList.add('no-scroll');
     }
 };
@@ -1936,25 +1975,24 @@ window.editTransaction = (id) => {
 
 window.openReceiptViewer = (id) => {
     const transaction = transactions.find(t => t.id.toString() === id.toString());
-    const receiptModal = document.getElementById('receipt-modal');
+    const receiptModal = injectModal('receipt-modal');
     const receiptViewerImg = document.getElementById('receipt-viewer-img');
 
     if (transaction && transaction.photoData && receiptModal) {
         if (receiptViewerImg) receiptViewerImg.src = transaction.photoData;
-        receiptModal.classList.add('active');
+        receiptModal.style.display = 'flex';
+        setTimeout(() => receiptModal.classList.add('active'), 10);
         document.body.classList.add('no-scroll');
     }
 };
 
 const closeReceiptViewer = () => {
-    const receiptModal = document.getElementById('receipt-modal');
     const receiptViewerImg = document.getElementById('receipt-viewer-img');
-
-    if (receiptModal) {
-        receiptModal.classList.remove('active');
-        document.body.classList.remove('no-scroll');
-        setTimeout(() => { if (receiptViewerImg) receiptViewerImg.src = ''; }, 300);
+    document.body.classList.remove('no-scroll');
+    if (receiptViewerImg) {
+        setTimeout(() => { receiptViewerImg.src = ''; }, 300);
     }
+    ejectModal('receipt-modal');
 };
 
 /* ==========================================================================
@@ -2371,15 +2409,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const btnCancel = document.getElementById('btn-cancel');
-    const btnCancelAnimal = document.getElementById('btn-cancel-animal');
-    const animalForm = document.getElementById('animal-form');
+    // Transações: Capturar elementos dos modais via Registry
+    const regModalT = modalRegistry['modal'];
+    const regModalA = modalRegistry['animal-modal'];
+    const regModalD = modalRegistry['delete-confirm-modal'];
+    const regModalR = modalRegistry['receipt-modal'];
+    const regModalL = modalRegistry['alert-modal'];
+
+    const btnCancel = regModalT ? regModalT.querySelector('#btn-cancel') : null;
+    const btnCancelAnimal = regModalA ? regModalA.querySelector('#btn-cancel-animal') : null;
+    const animalForm = regModalA ? regModalA.querySelector('#animal-form') : null;
 
     if (btnCancel) btnCancel.addEventListener('click', closeModal);
     if (btnCancelAnimal) btnCancelAnimal.addEventListener('click', closeAnimalModal);
     if (animalForm) animalForm.addEventListener('submit', saveAnimal);
 
-    const animalCategory = document.getElementById('animal-category');
+    const animalCategory = regModalA ? regModalA.querySelector('#animal-category') : null;
     if (animalCategory) {
         animalCategory.addEventListener('change', (e) => {
             toggleAnimalFields(e.target.value);
@@ -2387,36 +2432,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Fechar Modal Clicando Fora e ESC
-    const modal = document.getElementById('modal');
-    const deleteConfirmModal = document.getElementById('delete-confirm-modal');
 
-    if (modal) {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
+    if (regModalT) {
+        regModalT.addEventListener('click', (e) => {
+            if (e.target === regModalT) closeModal();
         });
     }
 
-    if (deleteConfirmModal) {
-        deleteConfirmModal.addEventListener('click', (e) => {
-            if (e.target === deleteConfirmModal) {
-                deleteConfirmModal.classList.remove('active');
+    if (regModalD) {
+        regModalD.addEventListener('click', (e) => {
+            if (e.target === regModalD) {
+                regModalD.classList.remove('active');
                 document.body.classList.remove('no-scroll');
+                ejectModal('delete-confirm-modal');
             }
         });
     }
     
     // Botões do Modal de Exclusão
-    const btnCancelDelete = document.getElementById('btn-cancel-delete');
+    const btnCancelDelete = regModalD ? regModalD.querySelector('#btn-cancel-delete') : null;
     if (btnCancelDelete) {
         btnCancelDelete.addEventListener('click', () => {
-            if (deleteConfirmModal) {
-                deleteConfirmModal.classList.remove('active');
+            if (regModalD) {
+                regModalD.classList.remove('active');
                 document.body.classList.remove('no-scroll');
+                ejectModal('delete-confirm-modal');
             }
             transactionToDelete = null;
         });
     }
 
+    const btnConfirmDelete = regModalD ? regModalD.querySelector('#btn-confirm-delete') : null;
     if (btnConfirmDelete) {
         btnConfirmDelete.addEventListener('click', () => {
             if (transactionToDelete !== null) {
@@ -2434,35 +2480,45 @@ document.addEventListener('DOMContentLoaded', () => {
                     addNotification('Lançamento excluído com sucesso.', 'info');
                 }
             }
-            if (deleteConfirmModal) {
-                deleteConfirmModal.classList.remove('active');
+            if (regModalD) {
+                regModalD.classList.remove('active');
                 document.body.classList.remove('no-scroll');
+                ejectModal('delete-confirm-modal');
             }
             transactionToDelete = null;
         });
     }
 
-    const receiptModal = document.getElementById('receipt-modal');
-    if (receiptModal) {
-        receiptModal.addEventListener('click', (e) => {
-            if (e.target === receiptModal) closeReceiptViewer();
+    if (regModalR) {
+        regModalR.addEventListener('click', (e) => {
+            if (e.target === regModalR) closeReceiptViewer();
         });
     }
 
-    const btnCloseReceipt = document.getElementById('btn-close-receipt');
+    const btnCloseReceipt = regModalR ? regModalR.querySelector('#btn-close-receipt') : null;
     if (btnCloseReceipt) {
         btnCloseReceipt.addEventListener('click', closeReceiptViewer);
     }
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            if (modal && modal.classList.contains('active')) closeModal();
-            if (receiptModal && receiptModal.classList.contains('active')) closeReceiptViewer();
+            const activeModal = document.querySelector('.modal-overlay.active');
+            if (activeModal) {
+                const id = activeModal.id;
+                if (id === 'modal') closeModal();
+                else if (id === 'receipt-modal') closeReceiptViewer();
+                else if (id === 'animal-modal') closeAnimalModal();
+                else if (id === 'delete-confirm-modal') {
+                    activeModal.classList.remove('active');
+                    document.body.classList.remove('no-scroll');
+                    ejectModal('delete-confirm-modal');
+                } else if (id === 'alert-modal') toggleAlertModal(false);
+            }
         }
     });
 
     // Formulario Injetar Salvar Nova Transação
-    const form = document.getElementById('transaction-form');
+    const form = regModalT ? regModalT.querySelector('#transaction-form') : null;
 
     if (form) {
         form.addEventListener('submit', (e) => {
@@ -2860,19 +2916,17 @@ document.addEventListener('DOMContentLoaded', () => {
     renderActiveAlerts();
 
     // Eventos dos Alertas
-    const alertModal = document.getElementById('alert-modal');
-    const alertForm = document.getElementById('alert-form');
 
     const toggleAlertModal = (show) => {
-        const modal = document.getElementById('alert-modal');
-        if (modal) {
-            modal.style.display = show ? 'flex' : 'none';
-            if (show) {
-                modal.classList.add('active');
+        if (show) {
+            const modal = injectModal('alert-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+                setTimeout(() => modal.classList.add('active'), 10);
                 renderActiveAlerts();
-            } else {
-                modal.classList.remove('active');
             }
+        } else {
+            ejectModal('alert-modal');
         }
     };
 
@@ -2903,7 +2957,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (e.target && (e.target.id === 'btn-cancel-alert' || e.target.closest('#btn-cancel-alert'))) {
             toggleAlertModal(false);
-            if (alertForm) alertForm.reset();
+            const alertFormRef = regModalL ? regModalL.querySelector('#alert-form') : null;
+            if (alertFormRef) alertFormRef.reset();
         }
 
         // Notification Center interactions
@@ -2932,21 +2987,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    if (alertModal) {
-        alertModal.addEventListener('click', (e) => {
-            if (e.target === alertModal) {
+    if (regModalL) {
+        regModalL.addEventListener('click', (e) => {
+            if (e.target === regModalL) {
                 toggleAlertModal(false);
-                if (alertForm) alertForm.reset();
+                const alertFormRef = regModalL.querySelector('#alert-form');
+                if (alertFormRef) alertFormRef.reset();
             }
         });
     }
 
+    const alertForm = regModalL ? regModalL.querySelector('#alert-form') : null;
     if (alertForm) {
         alertForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const commodity = document.getElementById('alert-commodity').value;
-            const condition = document.getElementById('alert-condition').value;
-            const targetVal = parseFloat(document.getElementById('alert-target').value.replace(',', '.'));
+            const commodity = regModalL.querySelector('#alert-commodity').value;
+            const condition = regModalL.querySelector('#alert-condition').value;
+            const targetVal = parseFloat(regModalL.querySelector('#alert-target').value.replace(',', '.'));
 
             if (isNaN(targetVal) || targetVal <= 0) {
                 alert('Informe um valor válido.');
