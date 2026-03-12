@@ -2912,6 +2912,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const isClearAll = e.target.id === 'btn-clear-notifications';
 
         if (isBellClicked) {
+            console.log('Sininho clicado');
             toggleNotificationDropdown();
         } else if (isClearAll) {
             systemNotifications = [];
@@ -2970,7 +2971,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const btnThemeToggle = document.getElementById('btn-theme-toggle');
     if (btnThemeToggle) {
-        btnThemeToggle.addEventListener('click', () => {
+        const handleThemeToggle = () => {
+            console.log('Tema acionado');
             document.body.classList.toggle('dark-mode');
             const isDark = document.body.classList.contains('dark-mode');
 
@@ -2987,6 +2989,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     theme: isDark ? 'dark' : 'light'
                 }, { merge: true }).catch(err => console.error("Firebase theme save error", err));
             }
+        };
+
+        btnThemeToggle.addEventListener('click', handleThemeToggle);
+        btnThemeToggle.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            handleThemeToggle();
         });
     }
 
