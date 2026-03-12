@@ -518,17 +518,20 @@ button {
     position: fixed;
     top: 0;
     left: 0;
+    right: 0;
+    bottom: 0;
     width: 100vw;
-    height: 100vh;
+    height: 100dvh;
+    height: -webkit-fill-available;
     background: rgba(0, 0, 0, 0.4);
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0;
-    pointer-events: none;
+    pointer-events: auto; /* Ensure it captures backdrop touches */
     transition: opacity 0.3s ease;
     backdrop-filter: blur(5px);
-    z-index: 100;
+    z-index: 999999; /* Absolute top */
 }
 
 .modal-overlay.active {
@@ -546,17 +549,25 @@ button {
     transform: translateY(20px) scale(0.95);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     
-    /* Scroll & Height Fixes */
+    /* Scroll & Height Fixes for PWA */
     height: auto !important;
-    max-height: 80vh !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch; /* Momentum scrolling on iOS */
-    touch-action: pan-y !important; /* Force vertical scroll on mobile */
+    max-height: 85vh !important;
+    max-height: 85dvh !important;
     position: relative;
     z-index: 10001;
-    padding-bottom: 120px; /* Safe space for nav bar */
+    pointer-events: all !important;
     display: flex;
     flex-direction: column;
+    padding-bottom: 0; /* Handled by internal container */
+}
+
+.modal-scroll-container {
+    height: 100%;
+    width: 100%;
+    overflow-y: scroll !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain !important;
+    padding-bottom: 120px; /* Safe space for nav bar */
 }
 
 body.no-scroll {

@@ -615,96 +615,102 @@
 
     <div class="modal-overlay" id="modal">
         <div class="modal">
-            <h2 id="modal-title">Nova Transação</h2>
-            <form id="transaction-form">
+            <div class="modal-scroll-container">
+                <h2 id="modal-title">Nova Transação</h2>
+                <form id="transaction-form">
 
-                <div class="form-group">
-                    <label>Atividade (Módulo do Lançamento)</label>
-                    <div class="segment-toggle" id="transaction-segment-toggle">
-                        <input type="radio" name="t_segment" id="t_seg_leite" value="Leite">
-                        <label for="t_seg_leite">🐄 Leite</label>
+                    <div class="form-group">
+                        <label>Atividade (Módulo do Lançamento)</label>
+                        <div class="segment-toggle" id="transaction-segment-toggle">
+                            <input type="radio" name="t_segment" id="t_seg_leite" value="Leite">
+                            <label for="t_seg_leite">🐄 Leite</label>
 
-                        <input type="radio" name="t_segment" id="t_seg_corte" value="Corte">
-                        <label for="t_seg_corte">🥩 Pecuária</label>
+                            <input type="radio" name="t_segment" id="t_seg_corte" value="Corte">
+                            <label for="t_seg_corte">🥩 Pecuária</label>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="date-input">Data da Operação</label>
-                    <input type="date" id="date-input">
-                </div>
-                <div class="form-group">
-                    <label for="desc">Descrição (ex: Venda de Leite, Compra de Ração)</label>
-                    <input type="text" id="desc" placeholder="Digite a descrição...">
-                </div>
-                <div class="form-group">
-                    <label for="category">Categoria (Livro Caixa Rural)</label>
-                    <select id="category"
-                        style="width: 100%; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 10px; font-family: inherit; font-size: 1rem; outline: none; background: #fafafa; cursor: pointer;">
-                        <!-- Options injected by JS based on type -->
-                    </select>
-                </div>
-                <div class="form-group" id="liters-group" style="display: none;">
-                    <label for="liters">Quantidade (Litros) - <small>Módulo Leite</small></label>
-                    <input type="text" inputmode="decimal" id="liters" placeholder="0,00">
-                </div>
-                <div class="form-group" id="heads-group" style="display: none;">
-                    <label for="heads">Cabeças / Peso - <small>Módulo Pecuária</small></label>
-                    <input type="text" id="heads" placeholder="Ex: 5 cab. ou 1500 kg">
-                </div>
-
-                <div class="form-group">
-                    <label for="amount">Valor (R$)</label>
-                    <input type="text" inputmode="decimal" id="amount" placeholder="0,00">
-                </div>
-                <div class="form-group">
-                    <label for="receipt-photo">Comprovante (Opcional)</label>
-                    <div style="display: flex; gap: 0.5rem; align-items: center;">
-                        <input type="file" id="receipt-photo" accept="image/*" capture="environment"
-                            style="padding: 0.5rem; border: 1px dashed #ccc; background: transparent; cursor: pointer;">
-                        <span id="receipt-preview-name"
-                            style="font-size: 0.8rem; color: var(--color-text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;"></span>
+                    <div class="form-group">
+                        <label for="date-input">Data da Operação</label>
+                        <input type="date" id="date-input">
                     </div>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-cancel" id="btn-cancel">Cancelar</button>
-                    <button type="submit" class="btn-save" id="btn-save">Salvar</button>
-                </div>
-            </form>
+                    <div class="form-group">
+                        <label for="desc">Descrição (ex: Venda de Leite, Compra de Ração)</label>
+                        <input type="text" id="desc" placeholder="Digite a descrição...">
+                    </div>
+                    <div class="form-group">
+                        <label for="category">Categoria (Livro Caixa Rural)</label>
+                        <select id="category"
+                            style="width: 100%; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 10px; font-family: inherit; font-size: 1rem; outline: none; background: #fafafa; cursor: pointer;">
+                            <!-- Options injected by JS based on type -->
+                        </select>
+                    </div>
+                    <div class="form-group" id="liters-group" style="display: none;">
+                        <label for="liters">Quantidade (Litros) - <small>Módulo Leite</small></label>
+                        <input type="text" inputmode="decimal" id="liters" placeholder="0,00">
+                    </div>
+                    <div class="form-group" id="heads-group" style="display: none;">
+                        <label for="heads">Cabeças / Peso - <small>Módulo Pecuária</small></label>
+                        <input type="text" id="heads" placeholder="Ex: 5 cab. ou 1500 kg">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="amount">Valor (R$)</label>
+                        <input type="text" inputmode="decimal" id="amount" placeholder="0,00">
+                    </div>
+                    <div class="form-group">
+                        <label for="receipt-photo">Comprovante (Opcional)</label>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <input type="file" id="receipt-photo" accept="image/*" capture="environment"
+                                style="padding: 0.5rem; border: 1px dashed #ccc; background: transparent; cursor: pointer;">
+                            <span id="receipt-preview-name"
+                                style="font-size: 0.8rem; color: var(--color-text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;"></span>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancel" id="btn-cancel">Cancelar</button>
+                        <button type="submit" class="btn-save" id="btn-save">Salvar</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
     <!-- Receipt Viewer Modal -->
     <div class="modal-overlay" id="receipt-modal">
         <div class="modal" style="display: flex; flex-direction: column; align-items: center; padding: 1.5rem;">
-            <h2 id="receipt-modal-title" style="margin-bottom: 1rem; width: 100%; text-align: left;">Comprovante
-            </h2>
-            <div
-                style="width: 100%; display: flex; justify-content: center; background: #eee; border-radius: var(--border-radius); overflow: hidden; margin-bottom: 1.5rem;">
-                <img id="receipt-viewer-img" src="" alt="Comprovante"
-                    style="max-width: 100%; max-height: 50vh; object-fit: contain;">
+            <div class="modal-scroll-container">
+                <h2 id="receipt-modal-title" style="margin-bottom: 1rem; width: 100%; text-align: left;">Comprovante
+                </h2>
+                <div
+                    style="width: 100%; display: flex; justify-content: center; background: #eee; border-radius: var(--border-radius); overflow: hidden; margin-bottom: 1.5rem;">
+                    <img id="receipt-viewer-img" src="" alt="Comprovante"
+                        style="max-width: 100%; max-height: 50vh; object-fit: contain;">
+                </div>
+                <button type="button" class="btn-cancel" id="btn-close-receipt"
+                    style="width: 100%; background: rgb(100, 100, 100); color: white;">Fechar Comprovante</button>
             </div>
-            <button type="button" class="btn-cancel" id="btn-close-receipt"
-                style="width: 100%; background: rgb(100, 100, 100); color: white;">Fechar Comprovante</button>
         </div>
     </div>
 
     <!-- Delete Confirm Modal -->
     <div class="modal-overlay" id="delete-confirm-modal" style="z-index: 2000;">
         <div class="modal" style="text-align: center; padding: 2rem;">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgb(200, 0, 0)" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                <line x1="10" y1="11" x2="10" y2="17"></line>
-                <line x1="14" y1="11" x2="14" y2="17"></line>
-            </svg>
-            <h2 style="color: var(--color-text); margin-bottom: 1rem;">Confirmar Exclusão</h2>
-            <p style="color: var(--color-text-light); margin-bottom: 2rem;">Tem certeza que deseja apagar este
-                lançamento? Esta ação não pode ser desfeita.</p>
-            <div class="modal-actions" style="display: flex; gap: 1rem;">
-                <button type="button" class="btn-cancel" id="btn-cancel-delete" style="flex: 1;">Cancelar</button>
-                <button type="button" class="btn-save" id="btn-confirm-delete"
-                    style="flex: 1; background: rgb(200, 0, 0);">Sim, Excluir</button>
+            <div class="modal-scroll-container">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgb(200, 0, 0)" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+                <h2 style="color: var(--color-text); margin-bottom: 1rem;">Confirmar Exclusão</h2>
+                <p style="color: var(--color-text-light); margin-bottom: 2rem;">Tem certeza que deseja apagar este
+                    lançamento? Esta ação não pode ser desfeita.</p>
+                <div class="modal-actions" style="display: flex; gap: 1rem;">
+                    <button type="button" class="btn-cancel" id="btn-cancel-delete" style="flex: 1;">Cancelar</button>
+                    <button type="button" class="btn-save" id="btn-confirm-delete"
+                        style="flex: 1; background: rgb(200, 0, 0);">Sim, Excluir</button>
+                </div>
             </div>
         </div>
     </div>
@@ -712,44 +718,46 @@
     <!-- Market Alert Modal -->
     <div class="modal-overlay" id="alert-modal">
         <div class="modal">
-            <h2 id="alert-modal-title" style="color: var(--color-text); margin-bottom: 1rem;">Criar Alerta de Preço</h2>
-            <form id="alert-form">
-                <div class="form-group">
-                    <label for="alert-commodity">Commodity</label>
-                    <select id="alert-commodity"
-                        style="width: 100%; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 10px; font-family: inherit; font-size: 1rem; outline: none; background: #fafafa; cursor: pointer;">
-                        <option value="Boi Gordo (B3 Mar/26)">Boi Gordo</option>
-                        <option value="Soja (Paranaguá)">Soja</option>
-                        <option value="Soja (Paranaguá/B3)">Soja (Esalq/B3 Alternativa)</option>
-                        <option value="Milho (Esalq/B3)">Milho</option>
-                        <option value="Dólar Comercial">Dólar Comercial</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="alert-condition">Condição</label>
-                    <select id="alert-condition"
-                        style="width: 100%; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 10px; font-family: inherit; font-size: 1rem; outline: none; background: #fafafa; cursor: pointer;">
-                        <option value="greater">Maior que (&gt;)</option>
-                        <option value="less">Menor que (&lt;)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="alert-target">Valor Alvo (R$)</label>
-                    <input type="number" id="alert-target" step="0.01" required placeholder="0,00">
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-cancel" id="btn-cancel-alert">Cancelar</button>
-                    <button type="submit" class="btn-save" id="btn-save-alert"
-                        style="background: var(--color-income);">Salvar Alerta</button>
-                </div>
-            </form>
+            <div class="modal-scroll-container">
+                <h2 id="alert-modal-title" style="color: var(--color-text); margin-bottom: 1rem;">Criar Alerta de Preço</h2>
+                <form id="alert-form">
+                    <div class="form-group">
+                        <label for="alert-commodity">Commodity</label>
+                        <select id="alert-commodity"
+                            style="width: 100%; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 10px; font-family: inherit; font-size: 1rem; outline: none; background: #fafafa; cursor: pointer;">
+                            <option value="Boi Gordo (B3 Mar/26)">Boi Gordo</option>
+                            <option value="Soja (Paranaguá)">Soja</option>
+                            <option value="Soja (Paranaguá/B3)">Soja (Esalq/B3 Alternativa)</option>
+                            <option value="Milho (Esalq/B3)">Milho</option>
+                            <option value="Dólar Comercial">Dólar Comercial</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="alert-condition">Condição</label>
+                        <select id="alert-condition"
+                            style="width: 100%; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 10px; font-family: inherit; font-size: 1rem; outline: none; background: #fafafa; cursor: pointer;">
+                            <option value="greater">Maior que (&gt;)</option>
+                            <option value="less">Menor que (&lt;)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="alert-target">Valor Alvo (R$)</label>
+                        <input type="number" id="alert-target" step="0.01" required placeholder="0,00">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancel" id="btn-cancel-alert">Cancelar</button>
+                        <button type="submit" class="btn-save" id="btn-save-alert"
+                            style="background: var(--color-income);">Salvar Alerta</button>
+                    </div>
+                </form>
 
-            <div style="margin-top: 2rem;">
-                <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--color-text-light);">Alertas Ativos
-                </h4>
-                <div id="active-alerts-list"
-                    style="font-size: 0.85rem; color: var(--color-text); display: flex; flex-direction: column; gap: 0.5rem;">
-                    <!-- Injetado via JS -->
+                <div style="margin-top: 2rem;">
+                    <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--color-text-light);">Alertas Ativos
+                    </h4>
+                    <div id="active-alerts-list"
+                        style="font-size: 0.85rem; color: var(--color-text); display: flex; flex-direction: column; gap: 0.5rem;">
+                        <!-- Injetado via JS -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -758,55 +766,57 @@
     <!-- Animal Registration Modal -->
     <div class="modal-overlay" id="animal-modal">
         <div class="modal">
-            <h2 id="animal-modal-title">Registrar Animal</h2>
-            <form id="animal-form">
-                <div class="form-group">
-                    <label for="animal-id">Brinco / Identificação</label>
-                    <input type="text" id="animal-id" placeholder="Ex: 001, Estrela..." required>
-                </div>
-                <div class="form-group">
-                    <label for="animal-name">Nome do Animal</label>
-                    <input type="text" id="animal-name" placeholder="Ex: Estrela">
-                </div>
-                <div class="form-group">
-                    <label for="animal-breed">Raça</label>
-                    <input type="text" id="animal-breed" placeholder="Ex: Holandesa">
-                </div>
-                <div class="form-group">
-                    <label for="animal-category">Categoria</label>
-                    <select id="animal-category" required
-                        style="width: 100%; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 10px; font-family: inherit; font-size: 1rem; outline: none; background: #fafafa; cursor: pointer;">
-                        <option value="Fêmea">Fêmea</option>
-                        <option value="Macho">Macho</option>
-                        <option value="Bezerro">Bezerro</option>
-                    </select>
-                </div>
-                <div id="reproductive-fields">
+            <div class="modal-scroll-container">
+                <h2 id="animal-modal-title">Registrar Animal</h2>
+                <form id="animal-form">
                     <div class="form-group">
-                        <label for="animal-last-calving">Data do Último Parto</label>
-                        <input type="date" id="animal-last-calving">
+                        <label for="animal-id">Brinco / Identificação</label>
+                        <input type="text" id="animal-id" placeholder="Ex: 001, Estrela..." required>
                     </div>
                     <div class="form-group">
-                        <label for="animal-insemination">Data de Inseminação (Opcional)</label>
-                        <input type="date" id="animal-insemination">
+                        <label for="animal-name">Nome do Animal</label>
+                        <input type="text" id="animal-name" placeholder="Ex: Estrela">
                     </div>
-                </div>
+                    <div class="form-group">
+                        <label for="animal-breed">Raça</label>
+                        <input type="text" id="animal-breed" placeholder="Ex: Holandesa">
+                    </div>
+                    <div class="form-group">
+                        <label for="animal-category">Categoria</label>
+                        <select id="animal-category" required
+                            style="width: 100%; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 10px; font-family: inherit; font-size: 1rem; outline: none; background: #fafafa; cursor: pointer;">
+                            <option value="Fêmea">Fêmea</option>
+                            <option value="Macho">Macho</option>
+                            <option value="Bezerro">Bezerro</option>
+                        </select>
+                    </div>
+                    <div id="reproductive-fields">
+                        <div class="form-group">
+                            <label for="animal-last-calving">Data do Último Parto</label>
+                            <input type="date" id="animal-last-calving">
+                        </div>
+                        <div class="form-group">
+                            <label for="animal-insemination">Data de Inseminação (Opcional)</label>
+                            <input type="date" id="animal-insemination">
+                        </div>
+                    </div>
 
-                <div id="bezerro-fields" style="display: none;">
-                    <div class="form-group">
-                        <label for="animal-birth-date">Data de Nascimento</label>
-                        <input type="date" id="animal-birth-date">
+                    <div id="bezerro-fields" style="display: none;">
+                        <div class="form-group">
+                            <label for="animal-birth-date">Data de Nascimento</label>
+                            <input type="date" id="animal-birth-date">
+                        </div>
+                        <div class="form-group">
+                            <label for="animal-initial-weight">Peso Inicial (kg)</label>
+                            <input type="number" id="animal-initial-weight" placeholder="Ex: 35">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="animal-initial-weight">Peso Inicial (kg)</label>
-                        <input type="number" id="animal-initial-weight" placeholder="Ex: 35">
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancel" id="btn-cancel-animal">Cancelar</button>
+                        <button type="submit" class="btn-save" id="btn-save-animal">Registrar Animal</button>
                     </div>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-cancel" id="btn-cancel-animal">Cancelar</button>
-                    <button type="submit" class="btn-save" id="btn-save-animal">Registrar Animal</button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 
