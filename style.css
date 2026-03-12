@@ -88,10 +88,10 @@
 
 .dark-mode {
     --color-bg: #0A0A0A;
-    --color-card: #141414;
+    --color-card: #1A1A1A; /* Standard Graphite */
     --color-text: #FFFFFF;
     --color-text-light: #94a3b8;
-    --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
 }
 
 .dark-mode .app-header {
@@ -598,6 +598,15 @@ body.no-scroll {
     font-size: 1.5rem;
 }
 
+.dark-mode .modal {
+    background: #1A1A1A; /* Deep Graphite */
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+}
+
+.dark-mode .modal h2 {
+    color: #FFFFFF;
+}
+
 .segment-toggle {
     display: flex;
     background: #eef2f5;
@@ -650,6 +659,14 @@ body.no-scroll {
     font-size: 0.95rem;
 }
 
+.dark-mode .form-group label {
+    color: #E0E0E0; /* Off-white for readability */
+}
+
+.dark-mode .form-group small {
+    color: #94a3b8;
+}
+
 .form-group input {
     width: 100%;
     padding: 0.9rem 1rem;
@@ -668,6 +685,24 @@ body.no-scroll {
     box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
 }
 
+.dark-mode .form-group input, 
+.dark-mode .form-group select, 
+.dark-mode .form-group textarea {
+    background: #2D2D2D !important;
+    border: 1px solid #444 !important;
+    color: #FFFFFF !important;
+}
+
+.dark-mode .form-group input::placeholder {
+    color: #888;
+}
+
+.dark-mode .form-group input:focus {
+    border-color: var(--color-income) !important;
+    background: #333 !important;
+    box-shadow: 0 0 0 3px rgba(0, 230, 118, 0.1);
+}
+
 .modal-actions {
     display: flex;
     gap: 1rem;
@@ -683,7 +718,9 @@ body.no-scroll {
 }
 
 .dark-mode .btn-cancel {
-    color: #333333;
+    background: transparent;
+    border: 1.5px solid #666;
+    color: #E0E0E0;
 }
 
 .btn-cancel:hover {
@@ -742,6 +779,18 @@ body.no-scroll {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
+
+.dark-mode .btn-save {
+    background: var(--color-income); /* Vibrant Green */
+    color: #000000 !important; /* Premium high contrast */
+    font-weight: 800;
+}
+
+.dark-mode .btn-save:hover {
+    background: #00C853;
+}
+
+
 
 .btn-pro-export {
     color: white;
