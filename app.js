@@ -9,6 +9,8 @@ let globalUserId = null;
 
 let transactions = [];
 let animals = [];
+let animalSearchQuery = '';
+let animalCategoryFilter = 'all';
 let marketAlerts = [];
 let systemNotifications = [];
 let currentType = '';
@@ -1318,6 +1320,7 @@ window.renderAnimals = () => {
     const totalAnimalsEl = document.getElementById('total-animals');
     const totalLactatingEl = document.getElementById('total-lactating');
     const totalDryEl = document.getElementById('total-dry');
+    const emptyStateEl = document.getElementById('animal-empty-state');
 
     if (!list) return;
 
@@ -1330,25 +1333,43 @@ window.renderAnimals = () => {
         if (totalAnimalsEl) totalAnimalsEl.textContent = '0';
         if (totalLactatingEl) totalLactatingEl.textContent = '0';
         if (totalDryEl) totalDryEl.textContent = '0';
+        if (emptyStateEl) emptyStateEl.style.display = 'none';
         return;
     }
 
     const today = new Date();
-    today.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
+
+    // Apply SEARCH and CATEGORY filters
+    const filteredAnimals = animals.filter(animal => {
+        const matchesSearch = !animalSearchQuery || 
+            (animal.animalId && animal.animalId.toLowerCase().includes(animalSearchQuery.toLowerCase())) ||
+            (animal.name && animal.name.toLowerCase().includes(animalSearchQuery.toLowerCase()));
+        
+        const matchesCategory = animalCategoryFilter === 'all' || animal.category === animalCategoryFilter;
+        
+        return matchesSearch && matchesCategory;
+    });
+
+    if (filteredAnimals.length === 0) {
+        if (emptyStateEl) emptyStateEl.style.display = 'block';
+    } else {
+        if (emptyStateEl) emptyStateEl.style.display = 'none';
+    }
 
     // Sort by Brinco/ID
-    const sortedAnimals = [...animals].sort((a,b) => (a.animalId || "").localeCompare(b.animalId || ""));
+    const sortedAnimals = [...filteredAnimals].sort((a, b) => (a.animalId || "").localeCompare(b.animalId || ""));
 
     sortedAnimals.forEach(animal => {
-        const lastCalvingStr = animal.lastCalving.replace(/-/g, '/');
-        const lastCalving = new Date(lastCalvingStr);
-        lastCalving.setHours(0, 0, 0, 0);
-        
-        const del = Math.floor((today - lastCalving) / (1000 * 60 * 60 * 24));
-        
+        const lastCalvingStr = animal.lastCalving ? animal.lastCalving.replace(/-/g, '/') : null;
+        const lastCalving = lastCalvingStr ? new Date(lastCalvingStr) : null;
+        if (lastCalving) lastCalving.setHours(0, 0, 0, 0);
+
+        let del = lastCalving ? Math.floor((today - lastCalving) / (1000 * 60 * 60 * 24)) : -1;
+
         let status = 'Novilha';
         let statusClass = 'status-novilha';
-        
+
         if (del >= 0) {
             if (del < 305) {
                 status = 'Lactação';
@@ -1373,7 +1394,7 @@ window.renderAnimals = () => {
             const insDateStr = animal.insemination.replace(/-/g, '/');
             const insDate = new Date(insDateStr);
             insDate.setHours(0, 0, 0, 0);
-            
+
             nextCalvingDate = new Date(insDate);
             nextCalvingDate.setDate(insDate.getDate() + 283);
             daysToCalving = Math.floor((nextCalvingDate - today) / (1000 * 60 * 60 * 24));
@@ -1384,10 +1405,10 @@ window.renderAnimals = () => {
         card.innerHTML = `
             <div class="animal-card-header">
                 <div class="animal-info">
-                    <div class="animal-avatar">🐄</div>
+                    <div class="animal-avatar">${animal.category === 'Macho' ? '🐂' : '🐄'}</div>
                     <div>
                         <div class="animal-name">${animal.animalId} ${animal.name ? '- ' + animal.name : ''}</div>
-                        <div class="animal-breed">${animal.breed || 'Raça não inf.'}</div>
+                        <div class="animal-breed">${animal.breed || 'Raça não inf.'} ${animal.category ? `• ${animal.category}` : ''}</div>
                     </div>
                 </div>
                 <div class="status-tag ${statusClass}">${status}</div>
@@ -1406,7 +1427,7 @@ window.renderAnimals = () => {
             <div class="animal-details">
                 <div>
                     <strong>Último Parto:</strong><br>
-                    ${lastCalving.toLocaleDateString('pt-BR')}
+                    ${lastCalving ? lastCalving.toLocaleDateString('pt-BR') : 'Não inf.'}
                 </div>
                 <div>
                     <strong>Próximo Parto:</strong><br>
@@ -1416,8 +1437,8 @@ window.renderAnimals = () => {
             </div>
             
             <div style="display: flex; gap: 10px; margin-top: 10px; justify-content: flex-end;">
-                <button onclick="editAnimal('${animal.id}')" style="background: transparent; color: var(--color-income); padding: 5px; font-size: 0.8rem; border: 1px solid var(--color-income); border-radius: 4px;">Editar</button>
-                <button onclick="deleteAnimal('${animal.id}')" style="background: transparent; color: var(--color-expense); padding: 5px; font-size: 0.8rem; border: 1px solid var(--color-expense); border-radius: 4px;">Excluir</button>
+                <button onclick="editAnimal('${animal.id}')" style="background: transparent; color: var(--color-income); padding: 5px; font-size: 0.8rem; border: 1px solid var(--color-income); border-radius: 4px; cursor: pointer;">Editar</button>
+                <button onclick="deleteAnimal('${animal.id}')" style="background: transparent; color: var(--color-expense); padding: 5px; font-size: 0.8rem; border: 1px solid var(--color-expense); border-radius: 4px; cursor: pointer;">Excluir</button>
             </div>
         `;
         list.appendChild(card);
@@ -1435,6 +1456,7 @@ window.saveAnimal = async (e) => {
     const animalId = document.getElementById('animal-id').value.trim();
     const name = document.getElementById('animal-name').value.trim();
     const breed = document.getElementById('animal-breed').value.trim();
+    const category = document.getElementById('animal-category').value;
     const lastCalving = document.getElementById('animal-last-calving').value;
     const insemination = document.getElementById('animal-insemination').value;
 
@@ -1447,6 +1469,7 @@ window.saveAnimal = async (e) => {
         animalId,
         name,
         breed,
+        category,
         lastCalving,
         insemination: insemination || null,
         updatedAt: new Date().toISOString()
@@ -1504,6 +1527,7 @@ window.editAnimal = (id) => {
     document.getElementById('animal-id').value = animal.animalId || '';
     document.getElementById('animal-name').value = animal.name || '';
     document.getElementById('animal-breed').value = animal.breed || '';
+    document.getElementById('animal-category').value = animal.category || 'Fêmea';
     document.getElementById('animal-last-calving').value = animal.lastCalving || '';
     document.getElementById('animal-insemination').value = animal.insemination || '';
 
@@ -2876,5 +2900,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (tSegLeiteRadio) tSegLeiteRadio.addEventListener('change', window.updateModalInputs);
     if (tSegCorteRadio) tSegCorteRadio.addEventListener('change', window.updateModalInputs);
+
+    // Herd Search Listener
+    const animalSearchInput = document.getElementById('animal-search');
+    if (animalSearchInput) {
+        animalSearchInput.addEventListener('input', (e) => {
+            animalSearchQuery = e.target.value;
+            renderAnimals();
+        });
+    }
+
+    // Herd Chips Listener
+    const animalChips = document.getElementById('animal-filter-chips');
+    if (animalChips) {
+        const chips = animalChips.querySelectorAll('.chip');
+        chips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                chips.forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                animalCategoryFilter = chip.getAttribute('data-filter');
+                renderAnimals();
+            });
+        });
+    }
 
 });

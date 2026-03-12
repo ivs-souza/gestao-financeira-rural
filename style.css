@@ -800,6 +800,55 @@ button {
     display: none;
 }
 
+/* ==========================================================================
+   HERD FILTERS & CHIPS
+   ========================================================================== */
+.herd-filters .chip {
+    padding: 0.5rem 1.2rem;
+    border-radius: 20px;
+    background: #eef2f5;
+    color: #546e7a;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    display: inline-block;
+    height: auto;
+    width: auto;
+    box-shadow: none;
+}
+
+.herd-filters .chip:hover {
+    background: #e2e8f0;
+    transform: none;
+}
+
+.herd-filters .chip.active {
+    background: var(--color-income);
+    color: white;
+}
+
+.dark-mode .herd-filters .chip {
+    background: #1e1e1e;
+    color: #94a3b8;
+}
+
+.dark-mode .herd-filters .chip.active {
+    background: var(--color-income);
+    color: #000;
+}
+
+.search-box-wrapper input::placeholder {
+    color: #94a3b8;
+}
+
+.dark-mode .search-box-wrapper input {
+    background: #141414 !important;
+    border: 1px solid #333 !important;
+}
+
 .market-card {
     background: var(--color-card);
     border-radius: var(--border-radius);
