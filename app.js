@@ -1594,6 +1594,7 @@ window.openAnimalModal = () => {
     const form = document.getElementById('animal-form');
     if (form) form.reset();
     if (modal) modal.classList.add('active');
+    document.body.classList.add('no-scroll');
     animalEditId = null;
     toggleAnimalFields('Fêmea'); // Default reset logic
 };
@@ -1627,6 +1628,7 @@ window.closeAnimalModal = () => {
     const modal = document.getElementById('animal-modal');
     const form = document.getElementById('animal-form');
     if (modal) modal.classList.remove('active');
+    document.body.classList.remove('no-scroll');
     if (form) form.reset();
     animalEditId = null;
 };
@@ -1851,6 +1853,7 @@ const openModal = (type) => {
     }
 
     if (modal) modal.classList.add('active');
+    document.body.classList.add('no-scroll');
     setTimeout(() => { if (descInput) descInput.focus(); }, 100);
 };
 
@@ -1860,6 +1863,7 @@ const closeModal = () => {
     const receiptPreviewName = document.getElementById('receipt-preview-name');
 
     if (modal) modal.classList.remove('active');
+    document.body.classList.remove('no-scroll');
     if (form) form.reset();
     currentType = '';
     photoBase64 = null;
@@ -1871,7 +1875,10 @@ const closeModal = () => {
 window.deleteTransaction = (id) => {
     transactionToDelete = id;
     const modal = document.getElementById('delete-confirm-modal');
-    if (modal) modal.classList.add('active');
+    if (modal) {
+        modal.classList.add('active');
+        document.body.classList.add('no-scroll');
+    }
 };
 
 window.editTransaction = (id) => {
@@ -1935,6 +1942,7 @@ window.openReceiptViewer = (id) => {
     if (transaction && transaction.photoData && receiptModal) {
         if (receiptViewerImg) receiptViewerImg.src = transaction.photoData;
         receiptModal.classList.add('active');
+        document.body.classList.add('no-scroll');
     }
 };
 
@@ -1944,6 +1952,7 @@ const closeReceiptViewer = () => {
 
     if (receiptModal) {
         receiptModal.classList.remove('active');
+        document.body.classList.remove('no-scroll');
         setTimeout(() => { if (receiptViewerImg) receiptViewerImg.src = ''; }, 300);
     }
 };
@@ -2386,17 +2395,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (deleteConfirmModal) {
         deleteConfirmModal.addEventListener('click', (e) => {
-            if (e.target === deleteConfirmModal) deleteConfirmModal.classList.remove('active');
+            if (e.target === deleteConfirmModal) {
+                deleteConfirmModal.classList.remove('active');
+                document.body.classList.remove('no-scroll');
+            }
         });
     }
-
+    
     // Botões do Modal de Exclusão
     const btnCancelDelete = document.getElementById('btn-cancel-delete');
-    const btnConfirmDelete = document.getElementById('btn-confirm-delete');
-
     if (btnCancelDelete) {
         btnCancelDelete.addEventListener('click', () => {
-            if (deleteConfirmModal) deleteConfirmModal.classList.remove('active');
+            if (deleteConfirmModal) {
+                deleteConfirmModal.classList.remove('active');
+                document.body.classList.remove('no-scroll');
+            }
             transactionToDelete = null;
         });
     }
@@ -2418,7 +2431,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     addNotification('Lançamento excluído com sucesso.', 'info');
                 }
             }
-            if (deleteConfirmModal) deleteConfirmModal.classList.remove('active');
+            if (deleteConfirmModal) {
+                deleteConfirmModal.classList.remove('active');
+                document.body.classList.remove('no-scroll');
+            }
             transactionToDelete = null;
         });
     }
