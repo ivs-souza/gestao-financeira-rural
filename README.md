@@ -1,46 +1,31 @@
-#🚜 Gestor Rural - White Paper Atualizado
+# 🚜 Gestor Rural - White Paper Atualizado
 O braço direito do produtor na palma da mão.
 
 O Gestor Rural evoluiu de uma planilha digital para um ecossistema de gestão modular. Agora, ele atende tanto a Pecuária Leiteira quanto a Pecuária de Corte, funcionando como um aplicativo nativo no celular, mesmo sem internet.
 
-🛠️ Funcionalidades Implementadas (v2.0)
-📱 Mobilidade e Acesso (NOVO!)
+## 🛠️ Funcionalidades Implementadas (v2.1)
 
-PWA (Progressive Web App): Instalável no Android e iPhone com ícone próprio.
+### 📋 Módulo Rebanho (EVOLUÇÃO)
+- **Busca em Tempo Real**: Localize animais instantaneamente pelo brinco ou nome.
+- **Filtros Rápidos (Chips)**: Segmentação ágil por Categoria (Fêmea, Macho, Bezerro) e Estado Produtivo (Secas, Lactação).
+- **Gestão Reprodutiva**: Controle de data de parto e inseminação com interface intuitiva.
 
-Offline First: Funciona sem internet no curral; os dados são sincronizados via localStorage.
+### 📱 Interface e UX (NOVO!)
+- **Floating Action Button (FAB)**: Menu expansivo com ícones minimalistas para lançamentos rápidos.
+- **Visual Premium**: Design refinado com sombras suaves e micro-animações.
+- **Ajuste de Safe Area**: Otimização para dispositivos iOS e PWA, garantindo que botões não sejam escondidos pela barra de navegação do sistema.
 
-Mobile First: Interface otimizada para uso com uma mão durante a lida.
+### 💰 Financeiro e Lançamentos
+- **Placeholders Explicativos**: Textos de exemplo refinados (ex: "Compra de Ração", "Venda de Bezerros") para orientar o registro correto de receitas e gastos.
+- **Dashboard Consolidado**: Visão global da saúde financeira da fazenda (Leite + Corte).
 
-🏗️ Arquitetura Modular (NOVO!)
+### 🔐 Segurança e Acessibilidade
+- **Mostrar/Escoder Senha**: Recurso de alternância de visibilidade (`Eye Toggle`) nas telas de Login e Cadastro.
+- **Dark Mode Premium**: Ajustes finos de contraste em botões e formulários (fundo grafite #1A1A1A) para uso noturno sem fadiga ocular.
 
-Módulo Leite: Foco em produção diária, preço por litro e qualidade.
-
-Módulo Pecuária de Corte: Foco em ganho de peso, arroba e manejo de lote.
-
-Dashboard Consolidado: Visão global da saúde financeira da fazenda (Leite + Corte).
-
-💰 Gestão Financeira Inteligente
-
-Filtros de Período: Visualização por Mês, Trimestre, Ano ou histórico total.
-
-Segmentação Automática: Cada gasto ou ganho é vinculado à sua respectiva atividade.
-
-Categorias Inteligentes: Organização de despesas (Ração, Medicamentos, Manutenção).
-
-📍 Localização e Cadastro
-
-Integração API IBGE: Busca inteligente de Município e Estado para o perfil da fazenda.
-
-Boas-Vindas Personalizado: Fluxo de configuração inicial para novos usuários.
-
-📄 Relatórios e Segurança
-
-Exportação PDF: Relatórios profissionais para contabilidade ou sócios.
-
-Backup JSON: Segurança total para exportar e importar dados no seu MacBook.
-
-Controle de Versão: 100% versionado via Git para total rastreabilidade.
+### ⚙️ Correções Técnicas e Estabilidade
+- **Renderização Condicional Real**: Modais são removidos fisicamente do DOM quando fechados, eliminando sobreposições invisíveis e bloqueios de clique.
+- **Resolução de Conflito de Scroll**: Correção definitiva para o travamento de rolagem em PWAs no iOS (iPhone).
 
 ---
 
@@ -51,4 +36,4 @@ Controle de Versão: 100% versionado via Git para total rastreabilidade.
 
 ---
 
-*Gerado via MacBook Air de Ives - 2026*
+*Gerado via MacBook Air de Ives - Atualizado em 12 de Março de 2026*
