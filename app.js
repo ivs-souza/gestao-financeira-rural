@@ -2242,25 +2242,51 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Criar Transação (Botões Abrir Modal)
-    const btnNewIncome = document.getElementById('btn-new-income');
-    const btnNewExpense = document.getElementById('btn-new-expense');
-    const btnNewIncomeTab = document.getElementById('btn-new-income-tab');
-    const btnNewExpenseTab = document.getElementById('btn-new-expense-tab');
+    // Criar Transação / Animal via FAB (Botões Abrir Modal)
+    const fabWrapper = document.getElementById('fab-wrapper');
+    const fabMain = document.getElementById('fab-main');
+    const fabOverlay = document.getElementById('fab-overlay');
+    const fabNewIncome = document.getElementById('fab-new-income');
+    const fabNewExpense = document.getElementById('fab-new-expense');
+    const fabNewAnimal = document.getElementById('fab-new-animal');
+
+    const toggleFab = () => {
+        if (fabWrapper) fabWrapper.classList.toggle('active');
+    };
+
+    const closeFab = () => {
+        if (fabWrapper) fabWrapper.classList.remove('active');
+    };
+
+    if (fabMain) fabMain.addEventListener('click', toggleFab);
+    if (fabOverlay) fabOverlay.addEventListener('click', closeFab);
+
+    if (fabNewIncome) {
+        fabNewIncome.addEventListener('click', () => {
+            openModal('income');
+            closeFab();
+        });
+    }
+
+    if (fabNewExpense) {
+        fabNewExpense.addEventListener('click', () => {
+            openModal('expense');
+            closeFab();
+        });
+    }
+
+    if (fabNewAnimal) {
+        fabNewAnimal.addEventListener('click', () => {
+            openAnimalModal();
+            closeFab();
+        });
+    }
+
     const btnCancel = document.getElementById('btn-cancel');
-
-    if (btnNewIncome) btnNewIncome.addEventListener('click', () => openModal('income'));
-    if (btnNewExpense) btnNewExpense.addEventListener('click', () => openModal('expense'));
-    if (btnNewIncomeTab) btnNewIncomeTab.addEventListener('click', () => openModal('income'));
-    if (btnNewExpenseTab) btnNewExpenseTab.addEventListener('click', () => openModal('expense'));
-    if (btnCancel) btnCancel.addEventListener('click', closeModal);
-
-    // Módulo Rebanho Events
-    const btnNewAnimal = document.getElementById('btn-new-animal');
     const btnCancelAnimal = document.getElementById('btn-cancel-animal');
     const animalForm = document.getElementById('animal-form');
 
-    if (btnNewAnimal) btnNewAnimal.addEventListener('click', openAnimalModal);
+    if (btnCancel) btnCancel.addEventListener('click', closeModal);
     if (btnCancelAnimal) btnCancelAnimal.addEventListener('click', closeAnimalModal);
     if (animalForm) animalForm.addEventListener('submit', saveAnimal);
 

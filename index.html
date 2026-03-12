@@ -183,23 +183,7 @@
                     <option value="all">Tudo</option>
                 </select>
             </div>
-            <div class="actions">
-                <button class="btn-income" id="btn-new-income">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    Nova Entrada
-                </button>
-                <button class="btn-expense" id="btn-new-expense">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    Nova Saída
-                </button>
-            </div>
+            <!-- Removed static action buttons in favor of FAB -->
 
 
 
@@ -475,14 +459,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h2 style="font-size: 1.5rem; color: var(--color-income);">Entradas</h2>
             </div>
-            <button class="btn-income" id="btn-new-income-tab" style="width: 100%; margin-bottom: 1.5rem;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                Nova Entrada
-            </button>
+            <!-- Removed static button -->
             <div class="transactions-list" id="transactions-list-entradas"></div>
         </div>
 
@@ -490,13 +467,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h2 style="font-size: 1.5rem; color: var(--color-expense);">Saídas</h2>
             </div>
-            <button class="btn-expense" id="btn-new-expense-tab" style="width: 100%; margin-bottom: 1.5rem;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                Nova Saída
-            </button>
+            <!-- Removed static button -->
             <div class="transactions-list" id="transactions-list-saidas"></div>
         </div>
 
@@ -562,15 +533,7 @@
                 </div>
             </div>
 
-            <button class="btn-income" id="btn-new-animal"
-                style="width: 100%; margin-bottom: 1.5rem; background-color: var(--color-income); box-shadow: 0 4px 12px rgba(0, 230, 118, 0.25);">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                Novo Animal
-            </button>
+            <!-- Removed static button -->
 
             <!-- Search and Filter Interface -->
             <div class="herd-filters" style="margin-bottom: 1.5rem;">
@@ -833,6 +796,42 @@
             </form>
         </div>
     </div>
+
+    <!-- Floating Action Button (FAB) -->
+    <div class="fab-wrapper" id="fab-wrapper">
+        <div class="fab-menu" id="fab-menu">
+            <button class="fab-item" id="fab-new-animal" data-label="Novo Animal">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <line x1="19" y1="8" x2="19" y2="14"></line>
+                    <line x1="16" y1="11" x2="22" y2="11"></line>
+                </svg>
+                <span>Novo Animal</span>
+            </button>
+            <button class="fab-item fab-expense" id="fab-new-expense" data-label="Nova Saída">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <polyline points="19 12 12 19 5 12"></polyline>
+                </svg>
+                <span>Nova Saída</span>
+            </button>
+            <button class="fab-item fab-income" id="fab-new-income" data-label="Nova Entrada">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="19" x2="12" y2="5"></line>
+                    <polyline points="5 12 12 5 19 12"></polyline>
+                </svg>
+                <span>Nova Entrada</span>
+            </button>
+        </div>
+        <button class="fab-main" id="fab-main" aria-label="Abrir menu de ações">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        </button>
+    </div>
+    <div class="fab-overlay" id="fab-overlay"></div>
 
     <script defer src="app.js"></script>
 </body>
