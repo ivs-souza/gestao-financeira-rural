@@ -2669,7 +2669,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("Salvando transação...", { desc, category, amountStr, amount });
 
                 let liters = null;
-                if (currentType === 'income' && litersInput && litersInput.value.trim() !== '') {
+                const litersGroup = document.getElementById('liters-group');
+                const isLitersVisible = litersGroup && litersGroup.style.display !== 'none';
+
+                if (currentType === 'income' && isLitersVisible && litersInput && litersInput.value.trim() !== '') {
                     const litersStr = litersInput.value.replace(/\./g, '').replace(',', '.');
                     liters = parseFloat(litersStr);
                 }
@@ -2719,7 +2722,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 const heads = (headsInput && headsInput.value.trim() !== '') ? headsInput.value.trim() : null;
 
                 const tSegCorteRadio = document.getElementById('t_seg_corte');
-                const activityVal = (tSegCorteRadio && tSegCorteRadio.checked) ? 'pecuaria' : 'leite';
+                const tSegLeiteRadio = document.getElementById('t_seg_leite');
+                
+                let activityVal = 'leite'; // Default
+                if (tSegCorteRadio && tSegCorteRadio.checked) {
+                    activityVal = 'pecuaria';
+                } else if (tSegLeiteRadio && tSegLeiteRadio.checked) {
+                    activityVal = 'leite';
+                } else {
+                    // Fallback to profile if radios are hidden/not checked
+                    const rawP = localStorage.getItem('rural_profile');
+                    if (rawP) {
+                        const p = JSON.parse(rawP);
+                        activityVal = (p.segmento === 'Corte') ? 'pecuaria' : 'leite';
+                    }
+                }
 
                 const newTransaction = {
                     id: editId ? editId : Date.now(),
@@ -2753,7 +2770,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Salvar no storage (Firebase)
                 if (globalUserId && window.firebaseDb) {
                     // Prepara dados compatíveis com JSON
-                    const fbData = { ...newTransaction, dateStr: newTransaction.date.toISOString() };
+                    const dateStr = (selectedDate instanceof Date && !isNaN(selectedDate)) 
+                        ? selectedDate.toISOString() 
+                        : new Date().toISOString();
+
+                    const fbData = { ...newTransaction, dateStr };
                     delete fbData.date; // Remover objeto Date para evitar conflitos de Timestamp
 
                     const txRef = window.firebaseDocWrapper(window.firebaseDb, 'users', globalUserId, 'transactions', newTransaction.id.toString());
@@ -3214,7 +3235,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // Check which radio is active
         const tSegLeiteRadio = document.getElementById('t_seg_leite');
         const tSegCorteRadio = document.getElementById('t_seg_corte');
-        const activeSeg = (tSegCorteRadio && tSegCorteRadio.checked) ? 'Corte' : 'Leite';
+        
+        let activeSeg = 'Leite'; // Generic default
+        if (tSegCorteRadio && tSegCorteRadio.checked) {
+            activeSeg = 'Corte';
+        } else if (tSegLeiteRadio && tSegLeiteRadio.checked) {
+            activeSeg = 'Leite';
+        } else {
+            // If none checked (e.g. just opened and profile-based hiding happened), use profile default
+            activeSeg = (profileSegment === 'Corte') ? 'Corte' : 'Leite';
+        }
 
         // 1. Liters Group (Milk Module)
         if (profileSegment === 'Corte') {
