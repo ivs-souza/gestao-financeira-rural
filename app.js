@@ -1575,9 +1575,14 @@ window.saveAnimal = async (e) => {
             animals.push({ id, ...animalData });
         }
 
+        const isUpdate = !!animalEditId;
         closeAnimalModal();
         renderAnimals();
         updateDashboard();
+
+        if (typeof addNotification === 'function') {
+            addNotification(isUpdate ? 'Dados do animal atualizados com sucesso!' : 'Animal cadastrado com sucesso!', 'success');
+        }
     } catch (error) {
         console.error("Erro ao salvar animal:", error);
         alert("Erro ao salvar animal: " + error.message);
@@ -1604,9 +1609,18 @@ window.editAnimal = (id) => {
     const animal = animals.find(a => a.id === id);
     if (!animal) return;
 
-    // Abrir o modal
-    const modal = document.getElementById('animal-modal');
-    if (modal) modal.classList.add('active');
+    // Abrir o modal com labels de edição
+    const modal = injectModal('animal-modal');
+    if (!modal) return;
+
+    const titleEl = document.getElementById('animal-modal-title');
+    const submitBtn = document.getElementById('btn-save-animal');
+    if (titleEl) titleEl.textContent = 'Editar Animal';
+    if (submitBtn) submitBtn.textContent = 'Salvar Alterações';
+
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('active'), 10);
+    document.body.classList.add('no-scroll');
 
     // Preencher campos
     document.getElementById('animal-id').value = animal.animalId || '';
@@ -1635,6 +1649,11 @@ window.openAnimalModal = () => {
     
     const form = document.getElementById('animal-form');
     if (form) form.reset();
+
+    const titleEl = document.getElementById('animal-modal-title');
+    const submitBtn = document.getElementById('btn-save-animal');
+    if (titleEl) titleEl.textContent = 'Registrar Animal';
+    if (submitBtn) submitBtn.textContent = 'Registrar Animal';
     
     // Force direct display before adding class for transition
     modal.style.display = 'flex';
