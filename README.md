@@ -62,7 +62,7 @@ Sempre utilize o comando de push customizado para manter a sincronização com o
 `gpush`
 
 **Caminho do Projeto no Sistema:**
-`/Users/ivessouza/.gemini/antigravity/scratch/rural-finance-app/`
+`/Users/ivessouza/Desktop/LidAgro/rural-finance-app/`
 
 ---
 *Gerado via MacBook Air de Ives - Documentação Consolidada em 12 de Março de 2026*
