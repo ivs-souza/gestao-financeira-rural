@@ -221,41 +221,11 @@
 
             <!-- COMPARATIVE BAR CHART (Visão Geral Only) -->
             <div id="comparison-chart-container" class="card chart-card" style="margin-bottom: 2rem; display: none;">
-                <h2 style="font-size: 1.1rem; margin-bottom: 1rem; text-align: center;">Comparativo Global: Leite vs Pecuária</h2>
+                <h2 style="font-size: 1.1rem; margin-bottom: 1rem; text-align: center;">Comparativo Global: Leite vs
+                    Pecuária
+                </h2>
                 <div style="position: relative; height: 300px; width: 100%;">
                     <canvas id="comparisonChart"></canvas>
-                </div>
-            </div>
-
-            <!-- DASHBOARD MODULAR: LEITE -->
-            <div id="dashboard-leite-metrics" style="display: none; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 2rem;">
-                <div class="card" id="milk-daily-card" style="grid-column: span 2; background: var(--color-card); border-left: 4px solid var(--color-income); padding: 1.5rem;">
-                    <h2 style="font-size: 0.9rem; color: var(--color-text-light);">Produção Diária Estimada</h2>
-                    <div class="amount" id="milk-daily-amount" style="font-size: 2rem; color: var(--color-text);">0 L</div>
-                </div>
-                <div class="card" id="milk-metric-card" style="text-align: center; background: var(--color-card);">
-                    <h2 style="font-size: 0.85rem;">Média por Vaca (L)</h2>
-                    <div class="amount" id="avg-milk-price" style="font-size: 1.5rem; color: var(--color-income);">0,00</div>
-                </div>
-                <div class="card" id="milk-tank-card" style="text-align: center; background: var(--color-card);">
-                    <h2 style="font-size: 0.85rem;">Volume no Tanque</h2>
-                    <div class="amount" id="milk-tank-amount" style="font-size: 1.5rem; color: var(--color-text);">0 L</div>
-                </div>
-            </div>
-
-            <!-- DASHBOARD MODULAR: CORTE -->
-            <div id="dashboard-corte-metrics" style="display: none; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 2rem;">
-                <div class="card" id="beef-weight-card" style="grid-column: span 2; background: var(--color-card); border-left: 4px solid #ed8936; padding: 1.5rem;">
-                    <h2 style="font-size: 0.9rem; color: var(--color-text-light);">Ganho de Peso Médio (GMD)</h2>
-                    <div class="amount" id="beef-weight-amount" style="font-size: 2rem; color: var(--color-text);">0.00 kg/dia</div>
-                </div>
-                <div class="card" id="beef-heads-card" style="text-align: center; background: var(--color-card);">
-                    <h2 style="font-size: 0.85rem;">Nº de Cabeças</h2>
-                    <div class="amount" id="beef-heads-amount" style="font-size: 1.5rem; color: #ed8936;">0</div>
-                </div>
-                <div class="card" id="beef-sales-card" style="text-align: center; background: var(--color-card);">
-                    <h2 style="font-size: 0.85rem;">Arrobas Vendidas</h2>
-                    <div class="amount" id="beef-arrobas-amount" style="font-size: 1.5rem; color: var(--color-income);">0 @</div>
                 </div>
             </div>
 
@@ -862,15 +832,6 @@
     <!-- Floating Action Button (FAB) -->
     <div class="fab-wrapper" id="fab-wrapper">
         <div class="fab-menu" id="fab-menu">
-            <div class="fab-menu-group" id="fab-group-leite">
-                <span class="fab-label">Registrar Ordenha</span>
-                <button class="fab-item" id="fab-new-milk" style="background: #E3F2FD; color: #1976D2;">
-                    <!-- Droplet icon -->
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
-                    </svg>
-                </button>
-            </div>
             <div class="fab-menu-group">
                 <span class="fab-label">Novo Animal</span>
                 <button class="fab-item" id="fab-new-animal">
