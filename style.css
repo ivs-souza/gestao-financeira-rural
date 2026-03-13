@@ -962,10 +962,10 @@ body.no-scroll {
    FLOATING ACTION BUTTON (FAB) - PREMIUM REFINEMENT
    ========================================================================== */
 .fab-wrapper {
-    position: fixed;
-    bottom: calc(24px + env(safe-area-inset-bottom));
-    right: 24px;
-    z-index: 1000;
+    position: fixed !important;
+    bottom: calc(30px + env(safe-area-inset-bottom));
+    right: 20px;
+    z-index: 99999 !important;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
