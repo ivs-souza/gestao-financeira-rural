@@ -963,7 +963,7 @@ body.no-scroll {
    ========================================================================== */
 .fab-wrapper {
     position: fixed !important;
-    bottom: calc(30px + env(safe-area-inset-bottom));
+    bottom: calc(80px + env(safe-area-inset-bottom));
     right: 20px;
     z-index: 99999 !important;
     display: flex;
@@ -1072,6 +1072,13 @@ body.no-scroll {
     justify-content: center;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0; /* Clear any padding */
+}
+
+.fab-item svg {
+    width: 24px;
+    height: 24px;
+    display: block;
 }
 
 .fab-item:hover {
