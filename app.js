@@ -336,13 +336,14 @@ const getFilteredTransactions = () => {
     const dateFiltered = filterTransactionsByDate(transactions);
 
     return dateFiltered.filter(t => {
-        // Logical rule: 'Leite' is default for old transactions without activity tag
+        // Logical rule: 'LEITE' is default for old transactions without activity tag
         let activityMatch = true;
+        const tActivity = t.activity ? t.activity.toUpperCase() : 'LEITE';
 
         if (activeModule === 'Leite') {
-            activityMatch = (t.activity === 'leite' || !t.activity);
+            activityMatch = (tActivity === 'LEITE');
         } else if (activeModule === 'Corte') {
-            activityMatch = (t.activity === 'pecuaria');
+            activityMatch = (tActivity === 'PECUARIA');
         }
 
         return activityMatch;
@@ -1911,9 +1912,6 @@ const openModal = (type) => {
             tSegCorte.style.display = 'none';
             if (lblCorte) lblCorte.style.display = 'none';
             tSegLeite.checked = true;
-            // Hide whole group label if only one? Requirements say "exiba apenas a opção", so we hide the other.
-            // But if there's only one option, the toggle is redundant.
-            // if (tSegToggleGroup) tSegToggleGroup.style.display = 'none'; 
         } else if (currentSegment === 'Corte') {
             tSegLeite.style.display = 'none';
             if (lblLeite) lblLeite.style.display = 'none';
@@ -1932,6 +1930,7 @@ const openModal = (type) => {
         }
     }
 
+    // Force call to sync inputs immediately
     if (typeof window.updateModalInputs === 'function') {
         window.updateModalInputs();
     }
@@ -1988,7 +1987,8 @@ window.editTransaction = (id) => {
     const headsInput = document.getElementById('heads');
 
     if (tSegLeite && tSegCorte) {
-        if (t.activity === 'pecuaria') {
+        const tActivity = t.activity ? t.activity.toUpperCase() : 'LEITE';
+        if (tActivity === 'PECUARIA') {
             tSegCorte.checked = true;
         } else {
             tSegLeite.checked = true;
@@ -2724,19 +2724,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 const tSegCorteRadio = document.getElementById('t_seg_corte');
                 const tSegLeiteRadio = document.getElementById('t_seg_leite');
                 
-                let activityVal = 'leite'; // Default
+                let activityVal = 'LEITE'; 
                 if (tSegCorteRadio && tSegCorteRadio.checked) {
-                    activityVal = 'pecuaria';
+                    activityVal = 'PECUARIA';
                 } else if (tSegLeiteRadio && tSegLeiteRadio.checked) {
-                    activityVal = 'leite';
+                    activityVal = 'LEITE';
                 } else {
-                    // Fallback to profile if radios are hidden/not checked
+                    // Fallback using profile segment name mapping
                     const rawP = localStorage.getItem('rural_profile');
                     if (rawP) {
                         const p = JSON.parse(rawP);
-                        activityVal = (p.segmento === 'Corte') ? 'pecuaria' : 'leite';
+                        activityVal = (p.segmento === 'Corte') ? 'PECUARIA' : 'LEITE';
                     }
                 }
+
+                console.log("Final Activity assigned:", activityVal);
 
                 const newTransaction = {
                     id: editId ? editId : Date.now(),
