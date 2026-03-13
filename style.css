@@ -775,9 +775,9 @@ body.no-scroll {
 
 .btn-cancel {
     background: transparent;
-    color: #999999;
+    color: #FF4D4D;
     flex: 1;
-    border: 1px solid #ddd;
+    border: 1px solid #FF4D4D;
     padding: 1rem;
     box-shadow: none;
     font-weight: 500;
@@ -785,12 +785,12 @@ body.no-scroll {
 
 .dark-mode .btn-cancel {
     background: transparent;
-    border: 1px solid #444;
-    color: #999999;
+    border: 1px solid #FF4D4D;
+    color: #FF4D4D;
 }
 
 .btn-cancel:hover {
-    background: #d0d0d0;
+    background: rgba(255, 77, 77, 0.05);
     transform: translateY(-2px);
 }
 
