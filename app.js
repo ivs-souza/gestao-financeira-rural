@@ -140,6 +140,7 @@ async function loadFirebaseData(userId) {
         }
 
         updateDashboard();
+        toggleActivityModules();
         renderTransactions();
         renderAnimals();
 
@@ -404,15 +405,46 @@ const updateDashboard = () => {
         else if (activeModule === 'Corte') balanceTitleEl.textContent = 'Saldo Total (Pecuária)';
     }
 
-    if (activeModule === 'Misto') {
-        if (comparisonChartContainer) comparisonChartContainer.style.display = 'block';
-        if (recentFeedContainer) {
-            recentFeedContainer.style.display = 'block';
-            renderRecentFeed();
-        }
+    // MODULAR DASHBOARD CARDS
+    const leitMetrics = document.getElementById('dashboard-leite-metrics');
+    const corteMetrics = document.getElementById('dashboard-corte-metrics');
+    const fabGroupLeite = document.getElementById('fab-group-leite');
+
+    if (activeModule === 'Leite') {
+        if (leitMetrics) leitMetrics.style.display = 'grid';
+        if (corteMetrics) corteMetrics.style.display = 'none';
+        if (fabGroupLeite) fabGroupLeite.style.display = 'flex';
+    } else if (activeModule === 'Corte') {
+        if (leitMetrics) leitMetrics.style.display = 'none';
+        if (corteMetrics) corteMetrics.style.display = 'grid';
+        if (fabGroupLeite) fabGroupLeite.style.display = 'none';
     } else {
-        if (comparisonChartContainer) comparisonChartContainer.style.display = 'none';
-        if (recentFeedContainer) recentFeedContainer.style.display = 'none';
+        // Mixed Mode
+        if (leitMetrics) leitMetrics.style.display = 'grid';
+        if (corteMetrics) corteMetrics.style.display = 'grid';
+        if (fabGroupLeite) fabGroupLeite.style.display = 'flex';
+    }
+
+    // CALCULATE MODULAR METRICS
+    if (activeModule !== 'Corte') {
+        // Milk Metrics
+        const milkDailyAmountEl = document.getElementById('milk-daily-amount');
+        const milkTankAmountEl = document.getElementById('milk-tank-amount');
+        
+        // Placeholder logic: Sum milk liters from the current filtered transactions
+        const milkLiters = filtered.filter(t => t.type === 'income' && t.category === 'Venda de Leite').reduce((acc, t) => acc + (t.liters || 0), 0);
+        if (milkDailyAmountEl) milkDailyAmountEl.textContent = `${milkLiters.toLocaleString('pt-BR')} L`;
+        if (milkTankAmountEl) milkTankAmountEl.textContent = `${(milkLiters * 0.8).toFixed(0)} L`; // Simple visual placeholder logic
+    }
+
+    if (activeModule !== 'Leite') {
+        // Beef Metrics
+        const beefHeadsAmountEl = document.getElementById('beef-heads-amount');
+        const beefWeightAmountEl = document.getElementById('beef-weight-amount');
+        
+        const beefAnimals = animals.filter(a => a.category === 'Macho' || a.category === 'Bezerro');
+        if (beefHeadsAmountEl) beefHeadsAmountEl.textContent = beefAnimals.length;
+        if (beefWeightAmountEl) beefWeightAmountEl.textContent = '0.85 kg/dia'; // Placeholder
     }
 
     if (dailyAvgEl) {
@@ -771,6 +803,9 @@ document.addEventListener('DOMContentLoaded', () => {
             renderSimulator(getFilteredTransactions());
         });
     }
+
+    // Initial modular UI sync
+    toggleActivityModules();
 });
 
 let comparisonChartInstance = null;
@@ -1655,6 +1690,14 @@ window.openAnimalModal = () => {
     if (titleEl) titleEl.textContent = 'Registrar Animal';
     if (submitBtn) submitBtn.textContent = 'Registrar Animal';
     
+    // Activity-based field visibility
+    const activeModule = localStorage.getItem('rural_active_module') || 'Misto';
+    const reproFields = document.getElementById('reproductive-fields');
+    if (reproFields && activeModule === 'Corte') {
+        // Hide repro fields initially for beef only, unless specifically female?
+        // Let toggleAnimalFields handle specifics
+    }
+
     // Force direct display before adding class for transition
     modal.style.display = 'flex';
     setTimeout(() => modal.classList.add('active'), 10);
@@ -1664,11 +1707,42 @@ window.openAnimalModal = () => {
     toggleAnimalFields('Fêmea'); // Default reset logic
 };
 
+window.toggleActivityModules = () => {
+    const activeModule = localStorage.getItem('rural_active_module') || 'Misto';
+    const fabGroupLeite = document.getElementById('fab-group-leite');
+    
+    if (fabGroupLeite) {
+        fabGroupLeite.style.display = (activeModule === 'Corte') ? 'none' : 'flex';
+    }
+    
+    // Pre-adjust Animal Modal if open or for next open
+    const reproFields = document.getElementById('reproductive-fields');
+    if (reproFields && activeModule === 'Corte') {
+        // If Beef only, we might want to hide some fields even for Fêmeas if not reproductive
+    }
+};
+
 window.toggleAnimalFields = (category) => {
     const reproFields = document.getElementById('reproductive-fields');
     const bezerroFields = document.getElementById('bezerro-fields');
+    const activeModule = localStorage.getItem('rural_active_module') || 'Misto';
     
     if (!reproFields || !bezerroFields) return;
+
+    // If only Beef, reproductive fields are generally not shown unless Misto/Leite
+    if (activeModule === 'Corte') {
+        reproFields.style.display = 'none';
+        reproFields.classList.remove('visible');
+        
+        if (category === 'Bezerro') {
+            bezerroFields.classList.add('visible');
+            bezerroFields.style.display = 'block';
+        } else {
+            bezerroFields.classList.remove('visible');
+            bezerroFields.style.display = 'none';
+        }
+        return;
+    }
 
     if (category === 'Fêmea') {
         reproFields.classList.add('visible');
@@ -1811,6 +1885,9 @@ window.loadProfile = () => {
             const seg = profile.segmento || 'Misto';
             if (btnLeite) btnLeite.style.display = (seg === 'Misto' || seg === 'Leite') ? 'flex' : 'none';
             if (btnCorte) btnCorte.style.display = (seg === 'Misto' || seg === 'Corte') ? 'flex' : 'none';
+
+            localStorage.setItem('rural_active_module', seg);
+            toggleActivityModules();
 
         } else if (oldUser) {
             if (profPropriedade) profPropriedade.value = oldUser;
@@ -2422,6 +2499,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fabOverlay = document.getElementById('fab-overlay');
     const fabNewIncome = document.getElementById('fab-new-income');
     const fabNewExpense = document.getElementById('fab-new-expense');
+    const fabNewMilk = document.getElementById('fab-new-milk');
     const fabNewAnimal = document.getElementById('fab-new-animal');
 
     const toggleFab = () => {
@@ -2438,6 +2516,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fabNewIncome) {
         fabNewIncome.addEventListener('click', () => {
             openModal('income');
+            closeFab();
+        });
+    }
+
+    if (fabNewMilk) {
+        fabNewMilk.addEventListener('click', () => {
+            openModal('income'); // Open income modal for milk registration
+            // Optional: could pre-set category if openModal supported it
             closeFab();
         });
     }
