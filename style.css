@@ -652,42 +652,72 @@ body.no-scroll {
 
 .segment-toggle {
     display: flex;
-    background: #eef2f5;
+    background: transparent;
     border-radius: 12px;
-    padding: 0.3rem;
-    gap: 0.3rem;
+    padding: 0.5rem;
+    gap: 1rem;
+    justify-content: center;
 }
 
 .segment-toggle input[type="radio"] {
-    display: none;
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    appearance: none;
 }
 
 .segment-toggle label {
     flex: 1;
-    text-align: center;
-    padding: 0.8rem 1rem;
-    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border-radius: 16px;
     cursor: pointer;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--color-text-light);
-    transition: all 0.2s ease;
-    margin-bottom: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--color-bg-light);
+    border: 2px solid transparent;
+    gap: 0.4rem;
+    max-width: 120px;
+}
+
+.segment-toggle .toggle-icon {
+    font-size: 1.5rem;
+    transition: transform 0.3s ease;
+}
+
+.segment-toggle label:hover {
+    background: rgba(0, 0, 0, 0.05);
 }
 
 .segment-toggle input[type="radio"]:checked+label {
-    background: white;
+    background: rgba(46, 125, 50, 0.08); /* Light forest green bg */
     color: var(--color-income);
-    /* Can be overridden via JS based on type, but defaulting to green is fine or var(--color-text) */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-color: var(--color-income);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
-.dark-mode .segment-toggle {
+.segment-toggle input[type="radio"]:checked+label .toggle-icon {
+    transform: scale(1.1);
+}
+
+.dark-mode .segment-toggle label {
     background: #2a2a2a;
+    color: #94a3b8;
+}
+
+.dark-mode .segment-toggle label:hover {
+    background: #333;
 }
 
 .dark-mode .segment-toggle input[type="radio"]:checked+label {
-    background: #3a3a3a;
-    color: #fff;
+    background: rgba(0, 230, 118, 0.1);
+    color: #00E676;
+    border-color: #00E676;
 }
 
 .form-group {
