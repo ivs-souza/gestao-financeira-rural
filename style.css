@@ -583,12 +583,12 @@ button {
 }
 
 .modal {
-    background: var(--color-card);
-    padding: 2.5rem 2rem;
-    border-radius: var(--border-radius);
-    width: 90%;
-    max-width: 420px;
-    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    width: 95%;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
     transform: translateY(20px) scale(0.95);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     
@@ -602,6 +602,7 @@ button {
     display: flex;
     flex-direction: column;
     padding-bottom: 0;
+    border: none;
 }
 
 .modal-overlay.active .modal {
@@ -638,6 +639,7 @@ body.no-scroll {
     background: #1A1A1A; /* Deep Graphite */
     box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8);
     border-radius: 16px;
+    border: none;
 }
 
 .dark-mode .modal h2 {
@@ -696,8 +698,10 @@ body.no-scroll {
     font-size: 0.95rem;
 }
 
+
 .dark-mode .form-group label {
     color: #E0E0E0; /* Matte White for visibility */
+    font-weight: 500;
 }
 
 .dark-mode .form-group small {
@@ -711,15 +715,16 @@ body.no-scroll {
     border-radius: 10px;
     font-family: inherit;
     font-size: 1rem;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: border-color 0.2s ease;
     background: #fafafa;
+    min-height: 48px;
 }
 
 .form-group input:focus {
     outline: none;
     border-color: #999;
     background: #fff;
-    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+    box-shadow: none;
 }
 
 .dark-mode .form-group input, 
@@ -727,12 +732,15 @@ body.no-scroll {
     background: #FFFFFF !important;
     border: 1px solid #444 !important;
     color: #000000 !important;
+    min-height: 48px;
+    box-shadow: none !important;
 }
 
 .dark-mode .form-group select {
     background: #F5F5F5 !important;
     border: 1px solid #CCC !important;
     color: #000000 !important;
+    min-height: 48px;
     appearance: none;
     -webkit-appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
@@ -740,6 +748,7 @@ body.no-scroll {
     background-position: right 1rem center;
     background-size: 1.2rem;
     padding-right: 3rem !important;
+    box-shadow: none !important;
 }
 
 .dark-mode .form-group input::placeholder {
@@ -754,23 +763,26 @@ body.no-scroll {
 
 .modal-actions {
     display: flex;
-    gap: 1rem;
+    flex-direction: column; /* Stacked for mobile focus */
+    gap: 0.8rem;
     margin-top: 2rem;
-    justify-content: center; /* Centralize buttons */
+    justify-content: center;
 }
 
 .btn-cancel {
-    background: #e0e0e0;
-    color: var(--color-text);
+    background: transparent;
+    color: #999999;
     flex: 1;
-    box-shadow: none;
+    border: 1px solid #ddd;
     padding: 1rem;
+    box-shadow: none;
+    font-weight: 500;
 }
 
 .dark-mode .btn-cancel {
     background: transparent;
-    border: 1.5px solid #666;
-    color: #E0E0E0;
+    border: 1px solid #444;
+    color: #999999;
 }
 
 .btn-cancel:hover {
@@ -817,12 +829,15 @@ body.no-scroll {
 }
 
 .btn-save {
-    background: #4CAF50; /* Vibrant Green */
-    color: #000000;
-    flex: 0 0 50%; /* 50% width */
-    box-shadow: 0 4px 14px rgba(76, 175, 80, 0.2);
+    background: #22C55E; /* Vibrant Green */
+    color: #FFFFFF;
+    width: 100%;
+    flex: none; 
+    box-shadow: none;
     padding: 1rem;
     font-weight: 700;
+    border-radius: 10px;
+    border: none;
 }
 
 .btn-save:hover {
@@ -948,8 +963,8 @@ body.no-scroll {
    ========================================================================== */
 .fab-wrapper {
     position: fixed;
-    bottom: 90px;
-    right: 20px;
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    right: 24px;
     z-index: 1000;
     display: flex;
     flex-direction: column;
@@ -960,10 +975,10 @@ body.no-scroll {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: #FF7F50; /* Coral */
+    background: #FF4D4D; /* Vibrant Red */
     border: none !important;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(255, 127, 80, 0.2);
+    box-shadow: 0 4px 12px rgba(255, 77, 77, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -983,12 +998,12 @@ body.no-scroll {
 }
 
 .fab-wrapper.active .fab-main {
-    background: #FF6B6B; /* Softer Coral/Red */
-    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+    background: #FF4D4D;
+    box-shadow: 0 4px 15px rgba(255, 77, 77, 0.4);
 }
 
 .fab-wrapper.active .fab-main svg {
-    transform: rotate(90deg);
+    transform: rotate(45deg); /* Professional 'X' rotation */
 }
 
 .fab-menu {
@@ -1028,14 +1043,14 @@ body.no-scroll {
 
 .fab-label {
     background: #FFFFFF;
-    color: #374151; /* Dark Gray */
-    font-size: 0.7rem;
-    font-weight: 500;
-    padding: 6px 16px;
+    color: #000000; /* Pure Black text */
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 12px;
     border-radius: 20px; /* Pill shape */
-    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     pointer-events: none;
-    border: 1px solid #f0f0f0;
+    border: none !important;
 }
 
 .dark-mode .fab-label {
