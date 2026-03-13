@@ -1899,12 +1899,36 @@ const openModal = (type) => {
 
     const tSegLeite = document.getElementById('t_seg_leite');
     const tSegCorte = document.getElementById('t_seg_corte');
+    const tSegToggleGroup = document.getElementById('transaction-segment-toggle') ? document.getElementById('transaction-segment-toggle').closest('.form-group') : null;
 
     if (tSegLeite && tSegCorte) {
-        if (contextSegment === 'Corte') {
+        const lblLeite = document.querySelector('label[for="t_seg_leite"]');
+        const lblCorte = document.querySelector('label[for="t_seg_corte"]');
+
+        if (currentSegment === 'Leite') {
+            tSegLeite.style.display = 'inline-block';
+            if (lblLeite) lblLeite.style.display = 'inline-flex';
+            tSegCorte.style.display = 'none';
+            if (lblCorte) lblCorte.style.display = 'none';
+            tSegLeite.checked = true;
+            // Hide whole group label if only one? Requirements say "exiba apenas a opção", so we hide the other.
+            // But if there's only one option, the toggle is redundant.
+            // if (tSegToggleGroup) tSegToggleGroup.style.display = 'none'; 
+        } else if (currentSegment === 'Corte') {
+            tSegLeite.style.display = 'none';
+            if (lblLeite) lblLeite.style.display = 'none';
+            tSegCorte.style.display = 'inline-block';
+            if (lblCorte) lblCorte.style.display = 'inline-flex';
             tSegCorte.checked = true;
         } else {
-            tSegLeite.checked = true;
+            // Misto
+            tSegLeite.style.display = 'inline-block';
+            if (lblLeite) lblLeite.style.display = 'inline-flex';
+            tSegCorte.style.display = 'inline-block';
+            if (lblCorte) lblCorte.style.display = 'inline-flex';
+            
+            if (contextSegment === 'Corte') tSegCorte.checked = true;
+            else tSegLeite.checked = true;
         }
     }
 
@@ -3179,12 +3203,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const litersGroup = document.getElementById('liters-group');
         const headsGroup = document.getElementById('heads-group');
         const litersInput = document.getElementById('liters');
-        const headsInput = document.getElementById('heads');
+        
+        let profileSegment = 'Misto';
+        const rawProfile = localStorage.getItem('rural_profile');
+        if (rawProfile) {
+            const profile = JSON.parse(rawProfile);
+            if (profile.segmento) profileSegment = profile.segmento;
+        }
 
-        // Check which radio is active (default Leite if none)
+        // Check which radio is active
+        const tSegLeiteRadio = document.getElementById('t_seg_leite');
+        const tSegCorteRadio = document.getElementById('t_seg_corte');
         const activeSeg = (tSegCorteRadio && tSegCorteRadio.checked) ? 'Corte' : 'Leite';
 
-        if (currentType === 'income') {
+        // 1. Liters Group (Milk Module)
+        if (profileSegment === 'Corte') {
+            // NEVER show liters if farm is Beef only
+            if (litersGroup) litersGroup.style.display = 'none';
+            if (litersInput) litersInput.value = '';
+        } else if (currentType === 'income') {
             if (litersGroup) litersGroup.style.display = (activeSeg === 'Leite') ? 'block' : 'none';
         } else {
             if (litersGroup) {
@@ -3193,6 +3230,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        // 2. Heads Group (Beef Module)
         if (headsGroup) {
             if (activeSeg === 'Corte') {
                 headsGroup.style.display = 'block';
