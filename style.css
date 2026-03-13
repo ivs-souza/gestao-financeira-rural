@@ -565,15 +565,19 @@ button {
     width: 100vw;
     height: 100dvh;
     height: -webkit-fill-available;
-    background: rgba(0, 0, 0, 0.4);
-    display: none !important; /* Physically hide to prevent blocking */
+    background: rgba(0, 0, 0, 0.2); /* Light Mode default */
+    display: none !important; 
     align-items: center;
     justify-content: center;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
-    backdrop-filter: blur(5px);
-    z-index: 999999;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(4px);
+    z-index: 99999;
+}
+
+.dark-mode .modal-overlay {
+    background: rgba(0, 0, 0, 0.4);
 }
 
 .modal-overlay.active {

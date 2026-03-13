@@ -2478,11 +2478,49 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Fechar Modal Clicando Fora e ESC
+    // Helper para verificar se o formulário tem dados preenchidos
+    const isFormDirty = (formId) => {
+        const form = document.getElementById(formId);
+        if (!form) return false;
+        
+        const inputs = form.querySelectorAll('input:not([type="hidden"]), select, textarea');
+        for (let input of inputs) {
+            if (input.type === 'checkbox' || input.type === 'radio') {
+                if (input.checked && input.defaultChecked === false) return true;
+            } else if (input.value && input.value !== input.defaultValue) {
+                // Para inputs de data, defaultValue pode ser vazio. 
+                // Ignoramos campos que já vêm com valor padrão do sistema se houver.
+                return true;
+            }
+        }
+        return false;
+    };
 
+    // Função universal para fechamento seguro
+    const requestSafeClose = (modalId, closeFn, formId) => {
+        if (formId && isFormDirty(formId)) {
+            if (confirm('Deseja descartar as alterações não salvas?')) {
+                closeFn();
+            }
+        } else {
+            closeFn();
+        }
+    };
+
+    // Fechar Modal Clicando Fora e ESC
     if (regModalT) {
         regModalT.addEventListener('click', (e) => {
-            if (e.target === regModalT) closeModal();
+            if (e.target === regModalT) {
+                requestSafeClose('modal', closeModal, 'transaction-form');
+            }
+        });
+    }
+
+    if (regModalA) {
+        regModalA.addEventListener('click', (e) => {
+            if (e.target === regModalA) {
+                requestSafeClose('animal-modal', closeAnimalModal, 'animal-form');
+            }
         });
     }
 
@@ -2552,17 +2590,28 @@ document.addEventListener('DOMContentLoaded', () => {
             const activeModal = document.querySelector('.modal-overlay.active');
             if (activeModal) {
                 const id = activeModal.id;
-                if (id === 'modal') closeModal();
-                else if (id === 'receipt-modal') closeReceiptViewer();
-                else if (id === 'animal-modal') closeAnimalModal();
-                else if (id === 'delete-confirm-modal') {
+                if (id === 'modal') {
+                    requestSafeClose('modal', closeModal, 'transaction-form');
+                } else if (id === 'animal-modal') {
+                    requestSafeClose('animal-modal', closeAnimalModal, 'animal-form');
+                } else if (id === 'receipt-modal') {
+                    closeReceiptViewer();
+                } else if (id === 'delete-confirm-modal') {
                     activeModal.classList.remove('active');
                     document.body.classList.remove('no-scroll');
                     ejectModal('delete-confirm-modal');
-                } else if (id === 'alert-modal') toggleAlertModal(false);
+                } else if (id === 'alert-modal') {
+                    toggleAlertModal(false);
+                }
             }
         }
     });
+
+    if (regModalL) {
+        regModalL.addEventListener('click', (e) => {
+            if (e.target === regModalL) toggleAlertModal(false);
+        });
+    }
 
     // Formulario Injetar Salvar Nova Transação
     const form = regModalT ? regModalT.querySelector('#transaction-form') : null;
