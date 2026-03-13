@@ -817,7 +817,8 @@ function renderComparisonChart(filteredData, textColor, gridColor) {
 
     filteredData.forEach(t => {
         const amt = parseFloat(t.amount) || 0;
-        const isLeite = (t.activity !== 'pecuaria');
+        const tActivity = t.activity ? t.activity.toUpperCase() : 'LEITE';
+        const isLeite = (tActivity !== 'PECUARIA');
 
         if (t.type === 'income') {
             if (isLeite) milkIncome += amt;
@@ -2644,7 +2645,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.addEventListener('submit', (e) => {
             // 5 - Validação: e.preventDefault() no início para evitar recarregamento da página
             e.preventDefault();
-            console.log("Submit event fired on transaction-form");
+            console.log("Submit event detected on transaction-form, validating data...");
 
             let isValid = true;
 
@@ -3226,6 +3227,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const litersGroup = document.getElementById('liters-group');
         const headsGroup = document.getElementById('heads-group');
         const litersInput = document.getElementById('liters');
+        const headsInput = document.getElementById('heads');
         
         let profileSegment = 'Misto';
         const rawProfile = localStorage.getItem('rural_profile');
