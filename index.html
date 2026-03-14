@@ -231,23 +231,18 @@
 
             <!-- ACESSO RÁPIDO AOS MÓDULOS -->
             <h3 style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--color-text);">Filtros de Setor</h3>
-            <div id="active-modules"
-                style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 2rem;">
-                <div class="card" id="module-leite-btn"
-                    style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border: 2px solid #e0e0e0; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; transition: transform 0.2s;">
-                    <span style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem;">🐄</span>
-                    <h3 style="color: #333; margin: 0; font-size: 1rem;">Ir para Leite</h3>
+            <div id="active-modules">
+                <div class="module-card" id="module-leite-btn">
+                    <span>🐄</span>
+                    <h3>Ir para Leite</h3>
                 </div>
-                <div class="card" id="module-corte-btn"
-                    style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border: 2px solid #e0e0e0; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; transition: transform 0.2s;">
-                    <span style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem;">🥩</span>
-                    <h3 style="color: #333; margin: 0; font-size: 1rem;">Ir para Pecuária</h3>
+                <div class="module-card" id="module-corte-btn">
+                    <span>🥩</span>
+                    <h3>Ir para Pecuária</h3>
                 </div>
-                <div class="card" id="module-misto-btn"
-                    style="grid-column: span 2; background: var(--color-card); border: 1px solid #ddd; cursor: pointer; text-align: center; display: flex; flex-direction: row; gap: 0.5rem; align-items: center; justify-content: center; padding: 1rem;">
-                    <span style="font-size: 1.2rem;">🏠</span>
-                    <h3 style="color: var(--color-text-light); margin: 0; font-size: 0.95rem;">Retornar à Visão Geral
-                    </h3>
+                <div class="module-card" id="module-misto-btn">
+                    <span>🏠</span>
+                    <h3>Retornar à Visão Geral</h3>
                 </div>
             </div>
 
