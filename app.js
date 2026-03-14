@@ -2077,6 +2077,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (appHeader) appHeader.style.display = 'flex';
                 if (bottomNav) bottomNav.style.display = 'flex';
                 if (appContainer) appContainer.style.display = 'block';
+                
+                const fabWrapper = document.getElementById('fab-wrapper');
+                if (fabWrapper) fabWrapper.style.display = 'flex';
+                
                 document.body.classList.add('is-logged-in'); // Enable app padding
 
                 // Verifica se já fez o "Welcome" (setup inicial)
@@ -2085,6 +2089,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!snap.exists() || !snap.data().profile?.propriedade) {
                         // Primeira vez logando, precisa definir o nome da fazenda
                         if (authScreenOriginal) authScreenOriginal.style.display = 'flex';
+                        const fabWrapper = document.getElementById('fab-wrapper');
+                        if (fabWrapper) fabWrapper.style.display = 'none';
                     } else {
                         if (authScreenOriginal) authScreenOriginal.style.display = 'none';
                         loadFirebaseData(user.uid);
@@ -2122,6 +2128,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (appHeader) appHeader.style.display = 'none';
                 if (bottomNav) bottomNav.style.display = 'none';
                 if (appContainer) appContainer.style.display = 'none';
+                
+                const fabWrapper = document.getElementById('fab-wrapper');
+                if (fabWrapper) fabWrapper.style.display = 'none';
+                
                 document.body.classList.remove('is-logged-in'); // Disable app padding
 
                 const fbAuthForm = document.getElementById('firebase-auth-form');
@@ -2241,6 +2251,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 );
                 
                 if (authScreenOriginal) authScreenOriginal.style.display = 'none';
+                
+                const fabWrapper = document.getElementById('fab-wrapper');
+                if (fabWrapper) fabWrapper.style.display = 'flex';
+                
                 loadFirebaseData(globalUserId);
                 showPage('tab-resumo');
             }
