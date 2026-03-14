@@ -835,6 +835,20 @@
                             <option value="Bezerro">Bezerro</option>
                         </select>
                     </div>
+                    
+                    <div class="form-group">
+                        <label for="animal-purchase-value">Valor de Compra (R$) - <small>Opcional</small></label>
+                        <input type="number" id="animal-purchase-value" step="0.01" placeholder="Ex: 2500.00">
+                    </div>
+                    
+                    <div class="form-group" style="display: flex; align-items: flex-start; gap: 8px; margin-top: -5px; margin-bottom: 15px;">
+                        <input type="checkbox" id="animal-auto-finance" style="margin-top: 4px; cursor: pointer;">
+                        <div>
+                            <label for="animal-auto-finance" style="margin-bottom: 2px; cursor: pointer;">Registrar como gasto no financeiro</label>
+                            <p style="font-size: 0.75rem; color: #666; margin: 0; line-height: 1.2;">Ao marcar, uma despesa de 'Compra de Gado' será contabilizada automaticamente no fluxo de caixa no mês atual.</p>
+                        </div>
+                    </div>
+
                     <div id="reproductive-fields">
                         <div class="form-group">
                             <label for="animal-last-calving">Data do Último Parto</label>

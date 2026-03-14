@@ -1925,6 +1925,10 @@ window.saveAnimal = async (e) => {
     // Bezerro fields
     const birthDate = document.getElementById('animal-birth-date').value || null;
     const initialWeight = document.getElementById('animal-initial-weight').value || null;
+    
+    // Novas integrações de Compra
+    const purchaseValue = document.getElementById('animal-purchase-value').value || null;
+    const autoFinance = document.getElementById('animal-auto-finance').checked;
 
     if (!animalId) {
         alert("O Brinco é obrigatório.");
@@ -1980,6 +1984,38 @@ window.saveAnimal = async (e) => {
                 
                 // Atualizar KPI discretamente
                 window.dispatchEvent(new CustomEvent('weighingUpdated'));
+            }
+        }
+        
+        // --- NOVO: Integração Financeira Automática ---
+        if (!animalEditId && autoFinance && purchaseValue) {
+            const purchaseAmount = parseFloat(purchaseValue);
+            if (!isNaN(purchaseAmount) && purchaseAmount > 0) {
+                const transactionsRef = window.firebaseCollectionWrapper(db, 'users', globalUserId, 'transactions');
+                
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                const dateVal = `${yyyy}-${mm}-${dd}`;
+
+                const transactionData = {
+                    type: 'expense',
+                    category: 'Compra de Gado',
+                    amount: purchaseAmount,
+                    dateStr: dateVal,
+                    date: new Date(dateVal + 'T00:00:00').toISOString(),
+                    description: `Compra de animal: ${animalId || name}`,
+                    activity: 'Pecuaria',
+                    timestamp: new Date().toISOString()
+                };
+
+                const newTxRef = await window.firebaseAddDocWrapper(transactionsRef, transactionData);
+                
+                transactions.push({
+                    id: newTxRef.id,
+                    ...transactionData
+                });
             }
         }
         // ---------------------------------------------------
