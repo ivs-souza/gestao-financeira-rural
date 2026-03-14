@@ -558,6 +558,25 @@ function renderProjection() {
             return;
         }
 
+        // Obter Perfil
+        let userSegment = 'Misto';
+        const rawProfile = localStorage.getItem('rural_profile');
+        if (rawProfile) {
+            try {
+                const profileObj = JSON.parse(rawProfile);
+                if (profileObj.segmento) userSegment = profileObj.segmento;
+            } catch (e) {
+                console.error("Erro lendo perfil para projection:", e);
+            }
+        }
+
+        const shouldInclude = (t) => {
+            const tAct = t.activity ? t.activity.toUpperCase() : 'LEITE'; // default legacy as Leite
+            if (userSegment === 'Corte' && tAct === 'LEITE') return false;
+            if (userSegment === 'Leite' && tAct === 'PECUARIA') return false;
+            return true;
+        };
+
         // Obter mês e ano atual real independente de filtro
         const today = new Date();
         const currentMonthReal = today.getMonth();
@@ -567,15 +586,21 @@ function renderProjection() {
         const threeMonthsAgo = new Date();
         threeMonthsAgo.setMonth(currentMonthReal - 3);
 
-        // Filtrar dados dos últimos 3 meses até o momento atual
+        // Filtrar dados dos últimos 3 meses até o momento atual COM VALIDAÇÃO DE PERFIL
         const trailingTransactions = transactions.filter(t => {
             if (!t || !t.date) return false;
+            if (!shouldInclude(t)) return false;
+            
             const tDate = new Date(t.date);
             return !isNaN(tDate) && tDate >= threeMonthsAgo && tDate <= today;
         });
 
         if (trailingTransactions.length === 0) {
-            projCard.style.display = 'none';
+            // Se nenhum dado relevante for salvo, zero os mostradores mas mostra o card (opcional)
+            projProfit.textContent = formatCurrency(0);
+            projLiters.textContent = '0 L';
+            projMessage.textContent = 'Aguardando dados da sua atividade...';
+            projCard.style.display = 'block';
             return;
         }
 
