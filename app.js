@@ -2355,11 +2355,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     setupIBGEAutocomplete();
 
-    // Formulário do Perfil
     const profileForm = document.getElementById('profile-form-inner');
     if (profileForm) {
-        profileForm.addEventListener('submit', (e) => {
+        profileForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            const btnSave = profileForm.querySelector('.btn-save');
+            const originalBtnText = btnSave ? btnSave.textContent : 'Salvar';
+            
             const profNome = document.getElementById('prof-nome');
             const profPropriedade = document.getElementById('prof-propriedade');
             const profCpf = document.getElementById('prof-cpf');
@@ -2384,18 +2387,26 @@ document.addEventListener('DOMContentLoaded', () => {
             const milkTarget = profMilkTarget && profMilkTarget.value ? profMilkTarget.value : null;
 
             if (globalUserId && window.firebaseDb) {
-                // Sincroniza via Firebase
-                window.firebaseSetDocWrapper(
-                    window.firebaseDocWrapper(window.firebaseDb, 'users', globalUserId),
-                    {
-                        profile: profile,
-                        goal: goal,
-                        milkTarget: milkTarget,
-                        activeModule: profile.segmento
-                    }, 
-                    { merge: true }
-                ).then(() => {
-                    // Atualiza cache local visual
+                try {
+                    // Feedback visual: Loading
+                    if (btnSave) {
+                        btnSave.disabled = true;
+                        btnSave.textContent = 'Salvando...';
+                    }
+
+                    // Sincroniza via Firebase e aguarda conclusão
+                    await window.firebaseSetDocWrapper(
+                        window.firebaseDocWrapper(window.firebaseDb, 'users', globalUserId),
+                        {
+                            profile: profile,
+                            goal: goal,
+                            milkTarget: milkTarget,
+                            activeModule: profile.segmento
+                        }, 
+                        { merge: true }
+                    );
+
+                    // Atualiza cache local visual APÓS o sucesso do Firebase
                     localStorage.setItem('rural_profile', JSON.stringify(profile));
                     if (profile.propriedade) localStorage.setItem('rural_user', profile.propriedade);
                     localStorage.setItem('rural_active_module', profile.segmento);
@@ -2414,17 +2425,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         alert('Perfil salvo com sucesso!');
                     }
-                }).catch(err => {
+
+                    // Força sincronização de estado na UI
+                    loadProfile();
+                    updateDashboard();
+                    renderTransactions();
+
+                } catch (err) {
                     console.error("Erro salvando perfil:", err);
                     alert("Erro ao salvar perfil: " + err.message);
-                });
+                } finally {
+                    // Restaura estado do botão
+                    if (btnSave) {
+                        btnSave.disabled = false;
+                        btnSave.textContent = originalBtnText;
+                    }
+                }
             } else {
                 alert("Erro: Faça login novamente para salvar o perfil na nuvem.");
             }
-
-            loadProfile();
-            updateDashboard();
-            renderTransactions();
         });
     }
 
