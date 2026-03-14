@@ -666,56 +666,38 @@ function renderProjection() {
         });
         const currentProfit = currentMonthIncome - currentMonthExpense;
 
-        // Pecuária KPI: Arrobas Produzidas no Mês Atual ou Total de Cabeças
+        // Pecuária KPI: Arrobas Totais do Rebanho Ativo
         const totalHeads = Array.isArray(window.animals) ? window.animals.length : 0;
-        let totalKgGained = 0;
+        let totalKgFarm = 0;
         
-        if (Array.isArray(window.weighings)) {
-            const currentMonthWeighings = window.weighings.filter(w => {
-                const wDate = new Date(w.date);
-                return wDate.getMonth() === currentMonthReal && wDate.getFullYear() === currentYearReal;
-            });
-
-            // Agrupar pesagens por animal
-            const animalsWeighedThisMonth = [...new Set(currentMonthWeighings.map(w => w.animalId))];
-
-            animalsWeighedThisMonth.forEach(id => {
-                const wGroup = window.weighings.filter(w => w.animalId === id).sort((a, b) => new Date(a.date) - new Date(b.date));
-                const currentMonthWeights = wGroup.filter(w => {
-                    const wDate = new Date(w.date);
-                    return wDate.getMonth() === currentMonthReal && wDate.getFullYear() === currentYearReal;
-                });
+        if (Array.isArray(window.animals)) {
+            window.animals.forEach(anim => {
+                let latestWeight = 0;
                 
-                if (currentMonthWeights.length > 0) {
-                    const latestThisMonthWeight = parseFloat(currentMonthWeights[currentMonthWeights.length - 1].weight);
-                    const latestThisMonthDate = new Date(currentMonthWeights[currentMonthWeights.length - 1].date);
-                    
-                    // Encontrar o peso imediatamente anterior a esta pesagem
-                    const previousWeighings = wGroup.filter(w => new Date(w.date) < latestThisMonthDate);
-                    
-                    let previousWeight = 0;
-                    if (previousWeighings.length > 0) {
-                        previousWeight = parseFloat(previousWeighings[previousWeighings.length - 1].weight);
-                    } else {
-                        // Tentar pegar do cadastro inicial
-                        const anim = window.animals.find(a => a.id === id);
-                        if (anim && anim.initialWeight && parseFloat(anim.initialWeight) > 0) {
-                            previousWeight = parseFloat(anim.initialWeight);
-                        } else {
-                             // Sem peso anterior para comparar
-                             previousWeight = latestThisMonthWeight; 
-                        }
+                // Buscar pesagens deste animal
+                if (Array.isArray(window.weighings)) {
+                    const animWeighings = window.weighings.filter(w => w.animalId === anim.id);
+                    if (animWeighings.length > 0) {
+                        // Ordenar por data cronológica e pegar a mais recente
+                        animWeighings.sort((a, b) => new Date(a.date) - new Date(b.date));
+                        latestWeight = parseFloat(animWeighings[animWeighings.length - 1].weight);
                     }
-                    
-                    const gain = latestThisMonthWeight - previousWeight;
-                    if (gain > 0) {
-                        totalKgGained += gain;
-                    }
+                }
+                
+                // Se não houver pesagem, tentar o peso inicial
+                if (!latestWeight || latestWeight <= 0) {
+                     if (anim.initialWeight && parseFloat(anim.initialWeight) > 0) {
+                         latestWeight = parseFloat(anim.initialWeight);
+                     }
+                }
+                
+                if (latestWeight > 0) {
+                    totalKgFarm += latestWeight;
                 }
             });
         }
 
-        const totalArrobas = totalKgGained / 30; // 30kg peso vivo = 1 arroba padrão mercado
+        const totalArrobas = totalKgFarm / 30; // 30kg peso vivo = 1 arroba padrão mercado
 
         // Atualiza Valores na UI
         if (projProfit) projProfit.textContent = formatCurrency(avgProfit);
@@ -723,18 +705,14 @@ function renderProjection() {
         if (projLitersEl) projLitersEl.textContent = avgLiters.toFixed(0) + ' L';
         
         const projHeadsEl = document.getElementById('proj-heads');
+        const projHeadsSecondaryEl = document.getElementById('proj-heads-secondary');
+        
         if (projHeadsEl) {
-            const lbl = document.querySelector('#kpi-corte .kpi-label');
-            const icon = document.querySelector('#kpi-corte .kpi-icon');
-            if (totalArrobas > 0) {
-                projHeadsEl.textContent = totalArrobas.toFixed(1) + ' @';
-                if(lbl) lbl.textContent = "Prod. Mensal";
-                if(icon) icon.textContent = "📈";
-            } else {
-                projHeadsEl.textContent = totalHeads + ' Cab.';
-                if(lbl) lbl.textContent = "Rebanho Total";
-                if(icon) icon.textContent = "🐂";
-            }
+            projHeadsEl.textContent = totalArrobas.toFixed(1) + ' @';
+        }
+        if (projHeadsSecondaryEl) {
+            projHeadsSecondaryEl.textContent = `${totalHeads} Cabeças`;
+            projHeadsSecondaryEl.style.display = totalHeads > 0 ? 'block' : 'none';
         }
 
         // Lógica de Visibilidade dos KPIs baseada no Perfil
