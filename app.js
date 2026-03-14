@@ -782,12 +782,31 @@ let comparisonChartInstance = null;
    ========================================================================== */
 function renderCharts(filteredData) {
     const chartsContainer = document.getElementById('charts-container');
+    const milkPriceCard = document.getElementById('milk-price-card');
+    
     if (!chartsContainer || filteredData.length === 0) {
         if (chartsContainer) chartsContainer.style.display = 'none';
         return;
     }
 
-    chartsContainer.style.display = 'grid'; // Retorna p/ grid em vez de none
+    // Toggle visibilidade específica do card de leite baseado no perfil
+    const profileStr = localStorage.getItem('rural_profile');
+    let isCorteOnly = false;
+    if (profileStr) {
+        const profile = JSON.parse(profileStr);
+        if (profile.segmento === 'Corte') isCorteOnly = true;
+    }
+
+    if (milkPriceCard) {
+        milkPriceCard.style.display = isCorteOnly ? 'none' : 'block';
+    }
+
+    // Ajusta o grid do container se apenas um gráfico estiver visível
+    if (isCorteOnly) {
+        chartsContainer.style.display = 'block'; // Carrossel ou lista simples em vez de 2 colunas
+    } else {
+        chartsContainer.style.display = 'grid'; 
+    }
 
     // Coletar cor baseada no tema
     const isDark = document.body.classList.contains('dark-mode');
@@ -795,7 +814,9 @@ function renderCharts(filteredData) {
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
 
     renderExpensesDonut(filteredData, textColor);
-    renderMilkPriceLine(filteredData, textColor, gridColor);
+    if (!isCorteOnly) {
+        renderMilkPriceLine(filteredData, textColor, gridColor);
+    }
     renderComparisonChart(filteredData, textColor, gridColor);
 }
 
