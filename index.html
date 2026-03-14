@@ -355,6 +355,18 @@
             </div>
 
 
+            <!-- HERD RECONCILIATION CARD -->
+            <div id="reconciliation-card" class="card" style="display: none; margin-bottom: 1.5rem; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border: 1px solid #ffb74d;">
+                <div style="display: flex; align-items: flex-start; gap: 10px;">
+                    <div style="font-size: 1.5rem;">⚠️</div>
+                    <div>
+                        <h3 style="margin: 0 0 0.4rem 0; color: #e65100; font-size: 1.05rem;">Baixa no Rebanho Pendente</h3>
+                        <p id="reconciliation-message" style="margin: 0 0 0.8rem 0; font-size: 0.9rem; color: #e65100; font-weight: 500;">Você registrou vendas de animais. É necessário remove-los do seu inventário.</p>
+                        <button onclick="openReconciliationModal()" style="background: #e65100; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9rem;">Selecionar Animais Vendidos</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- PROJECTION CARD -->
             <div id="projection-card" class="card projection-card" style="display: none; margin-bottom: 1.5rem;">
                 <h2 id="proj-title" style="font-size: 1.1rem; margin-bottom: 0.8rem; color: var(--color-text);">Previsão
@@ -847,9 +859,65 @@
         </div>
     </div>
 
+    <!-- Weighing Registration Modal -->
+    <div class="modal-overlay" id="weighing-modal">
+        <div class="modal">
+            <div class="modal-scroll-container">
+                <h2 id="weighing-modal-title" style="color: #8d6e63;">Registrar Pesagem</h2>
+                <form id="weighing-form">
+                    <div class="form-group">
+                        <label for="weighing-date">Data da Pesagem</label>
+                        <input type="date" id="weighing-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="weighing-animal">Identificação do Animal</label>
+                        <select id="weighing-animal" required
+                            style="width: 100%; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 10px; font-family: inherit; font-size: 1rem; outline: none; background: #fafafa; cursor: pointer;">
+                            <option value="">Selecione um animal...</option>
+                            <!-- Injected by JS -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="weighing-weight">Peso Atual (kg)</label>
+                        <input type="number" id="weighing-weight" step="0.1" placeholder="Ex: 450.5" required>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancel" onclick="closeWeighingModal()">Cancelar</button>
+                        <button type="submit" class="btn-save" id="btn-save-weighing" style="background: #8d6e63; color: white;">Salvar Pesagem</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Herd Reconciliation Modal -->
+    <div class="modal-overlay" id="reconciliation-modal">
+        <div class="modal">
+            <div class="modal-scroll-container">
+                <h2 id="reconciliation-modal-title" style="color: #e65100;">Confirmar Saída de Animais</h2>
+                <p style="font-size: 0.9rem; color: var(--color-text-light); margin-bottom: 1rem;">Selecione abaixo os animais que foram vendidos para dar baixa no seu inventário (<span id="reconciliation-target-count" style="font-weight:bold;color:var(--color-text)">0</span> cabeças pendentes).</p>
+                <form id="reconciliation-form">
+                    <div id="recon-animals-list" style="max-height: 250px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; padding: 10px; margin-bottom: 1rem;">
+                        <!-- Checkboxes injected by JS -->
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancel" onclick="closeReconciliationModal()">Cancelar</button>
+                        <button type="submit" class="btn-save" id="btn-save-reconciliation" style="background: #e65100; color: white;">Excluir Selecionados</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Floating Action Button (FAB) -->
     <div class="fab-wrapper" id="fab-wrapper">
         <div class="fab-menu" id="fab-menu">
+            <div class="fab-menu-group">
+                <span class="fab-label">Registrar Pesagem</span>
+                <button class="fab-item" id="fab-new-weighing" style="background: #8d6e63;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                </button>
+            </div>
             <div class="fab-menu-group">
                 <span class="fab-label">Novo Animal</span>
                 <button class="fab-item" id="fab-new-animal">

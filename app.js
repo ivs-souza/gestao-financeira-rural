@@ -9,6 +9,7 @@ let globalUserId = null;
 
 let transactions = [];
 let animals = [];
+let weighings = [];
 let animalSearchQuery = '';
 let animalCategoryFilter = 'all';
 let marketAlerts = [];
@@ -22,7 +23,7 @@ let animalEditId = null;
 // ==========================================================================
 const modalRegistry = {};
 const initModalRegistry = () => {
-    const modalIds = ['modal', 'animal-modal', 'receipt-modal', 'delete-confirm-modal', 'alert-modal'];
+    const modalIds = ['modal', 'animal-modal', 'receipt-modal', 'delete-confirm-modal', 'alert-modal', 'weighing-modal', 'reconciliation-modal'];
     modalIds.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
@@ -435,6 +436,33 @@ const updateDashboard = () => {
         dailyAvgEl.style.color = avg < 0 ? 'var(--color-expense)' : 'var(--color-text-light)';
     }
 
+    // HERD RECONCILIATION CARD
+    const reconCard = document.getElementById('reconciliation-card');
+    const reconTargetCount = document.getElementById('reconciliation-target-count');
+    if (reconCard && reconTargetCount) {
+        let totalPendingHeads = 0;
+        
+        const today = new Date();
+        const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+        
+        const recentTxs = transactions.filter(t => new Date(t.date) >= thirtyDaysAgo);
+        
+        recentTxs.forEach(t => {
+            if (t.pendingHeadsToReconcile && t.pendingHeadsToReconcile > 0) {
+                totalPendingHeads += t.pendingHeadsToReconcile;
+            }
+        });
+
+        if (totalPendingHeads > 0) {
+            reconCard.style.display = 'flex';
+            reconTargetCount.textContent = totalPendingHeads;
+            window.currentPendingReconciliation = totalPendingHeads;
+        } else {
+            reconCard.style.display = 'none';
+            window.currentPendingReconciliation = 0;
+        }
+    }
+
     // PREÇO MÉDIO DE LEITE
     const milkMetricCard = document.getElementById('milk-metric-card');
     const avgMilkPriceEl = document.getElementById('avg-milk-price');
@@ -638,16 +666,76 @@ function renderProjection() {
         });
         const currentProfit = currentMonthIncome - currentMonthExpense;
 
-        // Pecuária KPI: Total de Cabeças 
-        // (usa o array global animals carregado pelo app)
+        // Pecuária KPI: Arrobas Produzidas no Mês Atual ou Total de Cabeças
         const totalHeads = Array.isArray(window.animals) ? window.animals.length : 0;
+        let totalKgGained = 0;
+        
+        if (Array.isArray(window.weighings)) {
+            const currentMonthWeighings = window.weighings.filter(w => {
+                const wDate = new Date(w.date);
+                return wDate.getMonth() === currentMonthReal && wDate.getFullYear() === currentYearReal;
+            });
+
+            // Agrupar pesagens por animal
+            const animalsWeighedThisMonth = [...new Set(currentMonthWeighings.map(w => w.animalId))];
+
+            animalsWeighedThisMonth.forEach(id => {
+                const wGroup = window.weighings.filter(w => w.animalId === id).sort((a, b) => new Date(a.date) - new Date(b.date));
+                const currentMonthWeights = wGroup.filter(w => {
+                    const wDate = new Date(w.date);
+                    return wDate.getMonth() === currentMonthReal && wDate.getFullYear() === currentYearReal;
+                });
+                
+                if (currentMonthWeights.length > 0) {
+                    const latestThisMonthWeight = parseFloat(currentMonthWeights[currentMonthWeights.length - 1].weight);
+                    const latestThisMonthDate = new Date(currentMonthWeights[currentMonthWeights.length - 1].date);
+                    
+                    // Encontrar o peso imediatamente anterior a esta pesagem
+                    const previousWeighings = wGroup.filter(w => new Date(w.date) < latestThisMonthDate);
+                    
+                    let previousWeight = 0;
+                    if (previousWeighings.length > 0) {
+                        previousWeight = parseFloat(previousWeighings[previousWeighings.length - 1].weight);
+                    } else {
+                        // Tentar pegar do cadastro inicial
+                        const anim = window.animals.find(a => a.id === id);
+                        if (anim && anim.initialWeight && parseFloat(anim.initialWeight) > 0) {
+                            previousWeight = parseFloat(anim.initialWeight);
+                        } else {
+                             // Sem peso anterior para comparar
+                             previousWeight = latestThisMonthWeight; 
+                        }
+                    }
+                    
+                    const gain = latestThisMonthWeight - previousWeight;
+                    if (gain > 0) {
+                        totalKgGained += gain;
+                    }
+                }
+            });
+        }
+
+        const totalArrobas = totalKgGained / 30; // 30kg peso vivo = 1 arroba padrão mercado
 
         // Atualiza Valores na UI
         if (projProfit) projProfit.textContent = formatCurrency(avgProfit);
         const projLitersEl = document.getElementById('proj-liters');
         if (projLitersEl) projLitersEl.textContent = avgLiters.toFixed(0) + ' L';
+        
         const projHeadsEl = document.getElementById('proj-heads');
-        if (projHeadsEl) projHeadsEl.textContent = totalHeads + ' Cab.';
+        if (projHeadsEl) {
+            const lbl = document.querySelector('#kpi-corte .kpi-label');
+            const icon = document.querySelector('#kpi-corte .kpi-icon');
+            if (totalArrobas > 0) {
+                projHeadsEl.textContent = totalArrobas.toFixed(1) + ' @';
+                if(lbl) lbl.textContent = "Prod. Mensal";
+                if(icon) icon.textContent = "📈";
+            } else {
+                projHeadsEl.textContent = totalHeads + ' Cab.';
+                if(lbl) lbl.textContent = "Rebanho Total";
+                if(icon) icon.textContent = "🐂";
+            }
+        }
 
         // Lógica de Visibilidade dos KPIs baseada no Perfil
         const kpiLeite = document.getElementById('kpi-leite');
@@ -1603,6 +1691,230 @@ window.renderAnimals = () => {
     if (totalAnimalsEl) totalAnimalsEl.textContent = animals.length;
     if (totalLactatingEl) totalLactatingEl.textContent = countLactating;
     if (totalDryEl) totalDryEl.textContent = countDry;
+};
+
+/* ==========================================================================
+   WEIGHING LOGIC
+   ========================================================================== */
+window.openWeighingModal = () => {
+    const modal = injectModal('weighing-modal');
+    if (!modal) return;
+    
+    const form = document.getElementById('weighing-form');
+    if (form) form.reset();
+
+    const dateInput = document.getElementById('weighing-date');
+    if (dateInput) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        dateInput.value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    const selectAnimal = document.getElementById('weighing-animal');
+    if (selectAnimal) {
+        selectAnimal.innerHTML = '<option value="">Selecione um animal...</option>';
+        animals.forEach(a => {
+            const opt = document.createElement('option');
+            opt.value = a.id;
+            opt.textContent = `${a.animalId} ${a.name ? '- ' + a.name : ''} (${a.breed || a.category})`;
+            selectAnimal.appendChild(opt);
+        });
+    }
+    
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('active'), 10);
+    document.body.classList.add('no-scroll');
+};
+
+window.closeWeighingModal = () => {
+    ejectModal('weighing-modal');
+    document.body.classList.remove('no-scroll');
+};
+
+window.saveWeighing = async (e) => {
+    e.preventDefault();
+    const btnSave = document.getElementById('btn-save-weighing');
+    if (btnSave) {
+        btnSave.disabled = true;
+        btnSave.textContent = 'Salvando...';
+    }
+
+    try {
+        const dateVal = document.getElementById('weighing-date').value;
+        const animalId = document.getElementById('weighing-animal').value;
+        const weight = parseFloat(document.getElementById('weighing-weight').value);
+
+        if (!dateVal || !animalId || isNaN(weight)) {
+            throw new Error("Preencha todos os campos.");
+        }
+
+        const db = window.firebaseDb;
+        const weighingsRef = window.firebaseCollectionWrapper(db, 'users', globalUserId, 'weighings');
+        
+        const weighingData = {
+            animalId,
+            dateStr: dateVal,
+            date: new Date(dateVal + 'T00:00:00').toISOString(),
+            weight,
+            timestamp: new Date().toISOString()
+        };
+
+        const newDocRef = await window.firebaseAddDocWrapper(weighingsRef, weighingData);
+        
+        weighings.push({
+            id: newDocRef.id,
+            ...weighingData
+        });
+
+        alert("Pesagem registrada com sucesso!");
+        closeWeighingModal();
+        updateDashboard();
+
+    } catch (err) {
+        console.error("Erro ao salvar pesagem:", err);
+        alert("Erro ao salvar pesagem: " + err.message);
+    } finally {
+        if (btnSave) {
+            btnSave.disabled = false;
+            btnSave.textContent = 'Salvar Pesagem';
+        }
+    }
+};
+
+/* ==========================================================================
+   HERD RECONCILIATION LOGIC
+   ========================================================================== */
+window.openReconciliationModal = () => {
+    const modal = document.getElementById('reconciliation-modal');
+    if (!modal) return;
+    
+    const list = document.getElementById('recon-animals-list');
+    if (list) {
+        list.innerHTML = '';
+        if (animals.length === 0) {
+            list.innerHTML = '<p style="color:var(--color-text-light);text-align:center;">Nenhum animal cadastrado no rebanho.</p>';
+        } else {
+            animals.forEach(a => {
+                const div = document.createElement('div');
+                div.style.padding = '8px';
+                div.style.borderBottom = '1px solid #eee';
+                div.style.display = 'flex';
+                div.style.alignItems = 'center';
+                div.style.gap = '10px';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = a.id;
+                checkbox.id = `recon-chk-${a.id}`;
+                checkbox.className = 'recon-checkbox';
+                
+                const label = document.createElement('label');
+                label.htmlFor = `recon-chk-${a.id}`;
+                label.textContent = `${a.animalId} ${a.name ? '- ' + a.name : ''} (${a.breed || a.category})`;
+                label.style.flex = '1';
+                label.style.cursor = 'pointer';
+                
+                div.appendChild(checkbox);
+                div.appendChild(label);
+                list.appendChild(div);
+            });
+        }
+    }
+    
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('active'), 10);
+    document.body.classList.add('no-scroll');
+};
+
+window.closeReconciliationModal = () => {
+    const modal = document.getElementById('reconciliation-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => modal.style.display = 'none', 300);
+    }
+    document.body.classList.remove('no-scroll');
+};
+
+window.saveReconciliation = async (e) => {
+    if (e) e.preventDefault();
+    const btnSave = document.getElementById('btn-save-reconciliation');
+    
+    const checkboxes = document.querySelectorAll('.recon-checkbox:checked');
+    const selectedIds = Array.from(checkboxes).map(c => c.value);
+    
+    const targetCount = window.currentPendingReconciliation || 0;
+    
+    if (selectedIds.length === 0) {
+        alert("Por favor, selecione os animais que saíram do rebanho.");
+        return;
+    }
+    
+    if (selectedIds.length > targetCount) {
+        alert(`Você selecionou ${selectedIds.length} animais, mas as transações recentes indicam a saída de apenas ${targetCount} cabeças. Ajuste a seleção.`);
+        return;
+    }
+
+    if (btnSave) {
+        btnSave.disabled = true;
+        btnSave.textContent = 'Excluindo...';
+    }
+
+    try {
+        const db = window.firebaseDb;
+        
+        // 1. Excluir os animais selecionados
+        for (const id of selectedIds) {
+            const animalRef = window.firebaseDocWrapper(db, 'users', globalUserId, 'animals', id);
+            await window.firebaseDeleteDocWrapper(animalRef);
+            const index = animals.findIndex(a => a.id === id);
+            if (index > -1) animals.splice(index, 1);
+        }
+        
+        // 2. Zerar a pendência nas transações
+        let remainingToReconcile = selectedIds.length;
+        
+        const today = new Date();
+        const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+        
+        const pendingTxs = transactions.filter(t => 
+            new Date(t.date) >= thirtyDaysAgo && 
+            t.pendingHeadsToReconcile > 0
+        ).sort((a,b) => new Date(b.date) - new Date(a.date));
+        
+        for (const t of pendingTxs) {
+            if (remainingToReconcile <= 0) break;
+            
+            const toDeduct = Math.min(t.pendingHeadsToReconcile, remainingToReconcile);
+            
+            t.headsReconciled = (t.headsReconciled || 0) + toDeduct;
+            t.pendingHeadsToReconcile -= toDeduct;
+            remainingToReconcile -= toDeduct;
+            
+            const fbData = { ...t };
+            if (fbData.date instanceof Date) {
+               fbData.dateStr = fbData.date.toISOString();
+            }
+            delete fbData.date;
+            
+            const txRef = window.firebaseDocWrapper(db, 'users', globalUserId, 'transactions', t.id.toString());
+            await window.firebaseSetDocWrapper(txRef, fbData, { merge: true });
+        }
+        
+        alert(`${selectedIds.length} animais removidos com sucesso!`);
+        closeReconciliationModal();
+        updateDashboard();
+        
+    } catch (err) {
+        console.error("Erro na reconciliação:", err);
+        alert("Ocorreu um erro ao excluir os animais: " + err.message);
+    } finally {
+        if (btnSave) {
+            btnSave.disabled = false;
+            btnSave.textContent = 'Excluir Selecionados';
+        }
+    }
 };
 
 window.saveAnimal = async (e) => {
@@ -2567,6 +2879,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fabNewIncome = document.getElementById('fab-new-income');
     const fabNewExpense = document.getElementById('fab-new-expense');
     const fabNewAnimal = document.getElementById('fab-new-animal');
+    const fabNewWeighing = document.getElementById('fab-new-weighing');
 
     const toggleFab = () => {
         if (fabWrapper) fabWrapper.classList.toggle('active');
@@ -2600,20 +2913,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    if (fabNewWeighing) {
+        fabNewWeighing.addEventListener('click', () => {
+            openWeighingModal();
+            closeFab();
+        });
+    }
+
     // Transações: Capturar elementos dos modais via Registry
     const regModalT = modalRegistry['modal'];
     const regModalA = modalRegistry['animal-modal'];
+    const regModalW = modalRegistry['weighing-modal'];
+    const regModalRecon = modalRegistry['reconciliation-modal'];
     const regModalD = modalRegistry['delete-confirm-modal'];
     const regModalR = modalRegistry['receipt-modal'];
     const regModalL = modalRegistry['alert-modal'];
 
     const btnCancel = regModalT ? regModalT.querySelector('#btn-cancel') : null;
     const btnCancelAnimal = regModalA ? regModalA.querySelector('#btn-cancel-animal') : null;
+    const btnCancelWeighing = regModalW ? regModalW.querySelector('.btn-cancel') : null;
+    
     const animalForm = regModalA ? regModalA.querySelector('#animal-form') : null;
+    const weighingForm = regModalW ? regModalW.querySelector('#weighing-form') : null;
+    const reconForm = regModalRecon ? regModalRecon.querySelector('#reconciliation-form') : null;
 
     if (btnCancel) btnCancel.addEventListener('click', closeModal);
     if (btnCancelAnimal) btnCancelAnimal.addEventListener('click', closeAnimalModal);
+    if (btnCancelWeighing) btnCancelWeighing.addEventListener('click', closeWeighingModal);
+    
     if (animalForm) animalForm.addEventListener('submit', saveAnimal);
+    if (weighingForm) weighingForm.addEventListener('submit', saveWeighing);
+    if (reconForm) reconForm.addEventListener('submit', saveReconciliation);
 
     const animalCategory = regModalA ? regModalA.querySelector('#animal-category') : null;
     if (animalCategory) {
@@ -2839,7 +3169,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 const headsInput = document.getElementById('heads');
-                const heads = (headsInput && headsInput.value.trim() !== '') ? headsInput.value.trim() : null;
+                const rawHeads = (headsInput && headsInput.value.trim() !== '') ? headsInput.value.trim() : null;
+                let parsedHeadsInt = 0;
+                
+                if (rawHeads) {
+                    const match = rawHeads.match(/\d+/);
+                    if (match) parsedHeadsInt = parseInt(match[0], 10);
+                }
+
+                // Recuperar estado de reconciliação anterior se for edição
+                let headsReconciled = 0;
+                if (editId) {
+                    const oldTx = transactions.find(t => t.id === editId);
+                    if (oldTx && oldTx.headsReconciled) {
+                        headsReconciled = oldTx.headsReconciled;
+                    }
+                }
+                
+                // Se for venda de animais (income) ou morte (expense), calcular cabeças pendentes
+                let pendingHeadsToReconcile = 0;
+                if ((currentType === 'income' && category.toLowerCase().includes('venda de animais')) || 
+                    (currentType === 'expense' && (category.toLowerCase().includes('morte') || category.toLowerCase().includes('roubo')))) {
+                    pendingHeadsToReconcile = Math.max(0, parsedHeadsInt - headsReconciled);
+                }
 
                 const tSegCorteRadio = document.getElementById('t_seg_corte');
                 const tSegLeiteRadio = document.getElementById('t_seg_leite');
@@ -2868,7 +3220,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     type: currentType,
                     date: selectedDate,
                     liters: liters,
-                    heads: heads,
+                    heads: rawHeads,
+                    parsedHeadsInt: parsedHeadsInt,
+                    headsReconciled: headsReconciled,
+                    pendingHeadsToReconcile: pendingHeadsToReconcile,
                     activity: activityVal,
                     retroactive: isRetroactive,
                     photoData: photoBase64
