@@ -1967,6 +1967,40 @@ window.saveAnimal = async (e) => {
         
         await window.firebaseSetDocWrapper(animalRef, animalData);
         
+        // --- NOVO: Cadastrar Primeira Pesagem Automática ---
+        if (!animalEditId && initialWeight) {
+            const weightVal = parseFloat(initialWeight);
+            if (!isNaN(weightVal) && weightVal > 0) {
+                const weighingsRef = window.firebaseCollectionWrapper(db, 'users', globalUserId, 'weighings');
+                
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                const dateVal = `${yyyy}-${mm}-${dd}`;
+
+                const weighingData = {
+                    animalId: id,
+                    dateStr: dateVal,
+                    date: new Date(dateVal + 'T00:00:00').toISOString(),
+                    weight: weightVal,
+                    timestamp: new Date().toISOString(),
+                    isInitialWeight: true // Flag opcional para histórico
+                };
+
+                const newWeighingRef = await window.firebaseAddDocWrapper(weighingsRef, weighingData);
+                
+                weighings.push({
+                    id: newWeighingRef.id,
+                    ...weighingData
+                });
+                
+                // Atualizar KPI discretamente
+                window.dispatchEvent(new CustomEvent('weighingUpdated'));
+            }
+        }
+        // ---------------------------------------------------
+
         // Update local state
         const index = animals.findIndex(a => a.id === id);
         if (index !== -1) {
