@@ -140,6 +140,7 @@ async function loadFirebaseData(userId) {
         }
 
         updateDashboard();
+        loadProfile(); // Garante que regras de visibilidade (botões de módulo) sejam aplicadas
         renderTransactions();
         renderAnimals();
 
@@ -1810,9 +1811,18 @@ window.loadProfile = () => {
             // Toggle Segment Buttons in Dashboard depending on Profile
             const btnLeite = document.getElementById('module-leite-btn');
             const btnCorte = document.getElementById('module-corte-btn');
+            const btnMisto = document.getElementById('module-misto-btn');
+            
             const seg = profile.segmento || 'Misto';
+            
             if (btnLeite) btnLeite.style.display = (seg === 'Misto' || seg === 'Leite') ? 'flex' : 'none';
             if (btnCorte) btnCorte.style.display = (seg === 'Misto' || seg === 'Corte') ? 'flex' : 'none';
+            if (btnMisto) btnMisto.style.display = (seg === 'Misto') ? 'flex' : 'none';
+
+            // Se o perfil for fixo (não Misto), garante que o módulo ativo também seja fixado
+            if (seg !== 'Misto') {
+                localStorage.setItem('rural_active_module', seg);
+            }
 
         } else if (oldUser) {
             if (profPropriedade) profPropriedade.value = oldUser;
