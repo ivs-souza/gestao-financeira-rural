@@ -667,16 +667,16 @@ function renderProjection() {
         const currentProfit = currentMonthIncome - currentMonthExpense;
 
         // Pecuária KPI: Arrobas Totais do Rebanho Ativo
-        const totalHeads = Array.isArray(window.animals) ? window.animals.length : 0;
+        const totalHeads = Array.isArray(animals) ? animals.length : 0;
         let totalKgFarm = 0;
         
-        if (Array.isArray(window.animals)) {
-            window.animals.forEach(anim => {
+        if (Array.isArray(animals)) {
+            animals.forEach(anim => {
                 let latestWeight = 0;
                 
                 // Buscar pesagens deste animal
-                if (Array.isArray(window.weighings)) {
-                    const animWeighings = window.weighings.filter(w => w.animalId === anim.id);
+                if (Array.isArray(weighings)) {
+                    const animWeighings = weighings.filter(w => w.animalId === anim.id);
                     if (animWeighings.length > 0) {
                         // Ordenar por data cronológica e pegar a mais recente
                         animWeighings.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -693,9 +693,14 @@ function renderProjection() {
                 
                 if (latestWeight > 0) {
                     totalKgFarm += latestWeight;
+                    console.log(`[Arrobas Debug] Animal ${anim.animalId || anim.id}: +${latestWeight} kg`);
+                } else {
+                    console.log(`[Arrobas Debug] Animal ${anim.animalId || anim.id}: 0 kg (Sem peso inicial ou pesagem)`);
                 }
             });
         }
+
+        console.log(`[Arrobas Debug] Total Kg Fazenda: ${totalKgFarm}`);
 
         const totalArrobas = totalKgFarm / 30; // 30kg peso vivo = 1 arroba padrão mercado
 
