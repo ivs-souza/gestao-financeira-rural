@@ -638,26 +638,56 @@ function renderProjection() {
         });
         const currentProfit = currentMonthIncome - currentMonthExpense;
 
-        projProfit.textContent = formatCurrency(avgProfit);
-        projLiters.textContent = avgLiters.toFixed(0) + ' L';
+        // Pecuária KPI: Total de Cabeças 
+        // (usa o array global animals carregado pelo app)
+        const totalHeads = Array.isArray(window.animals) ? window.animals.length : 0;
+
+        // Atualiza Valores na UI
+        if (projProfit) projProfit.textContent = formatCurrency(avgProfit);
+        const projLitersEl = document.getElementById('proj-liters');
+        if (projLitersEl) projLitersEl.textContent = avgLiters.toFixed(0) + ' L';
+        const projHeadsEl = document.getElementById('proj-heads');
+        if (projHeadsEl) projHeadsEl.textContent = totalHeads + ' Cab.';
+
+        // Lógica de Visibilidade dos KPIs baseada no Perfil
+        const kpiLeite = document.getElementById('kpi-leite');
+        const kpiCorte = document.getElementById('kpi-corte');
+        
+        if (kpiLeite && kpiCorte) {
+            if (userSegment === 'Corte') {
+                kpiLeite.style.display = 'none';
+                kpiCorte.style.display = 'flex';
+                kpiCorte.style.flex = '1 1 100%'; 
+            } else if (userSegment === 'Leite') {
+                kpiCorte.style.display = 'none';
+                kpiLeite.style.display = 'flex';
+                kpiLeite.style.flex = '1 1 100%';
+            } else { // Misto
+                kpiLeite.style.display = 'flex';
+                kpiLeite.style.flex = '1';
+                kpiCorte.style.display = 'flex';
+                kpiCorte.style.flex = '1';
+            }
+        }
 
         const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
         const nextMonthIndex = (currentMonthReal + 1) % 12;
-        projTitle.textContent = `Previsão para ${monthNames[nextMonthIndex]}`;
+        if (projTitle) projTitle.textContent = `Previsão para ${monthNames[nextMonthIndex]}`;
 
-        projMessage.className = '';
-
-        if (avgProfit < currentProfit) {
-            projMessage.textContent = "Tendência de queda: Revise seus custos de ração 📉";
-            projMessage.style.backgroundColor = 'rgba(255, 0, 0, 0.1)';
-            projMessage.style.color = 'var(--color-expense)';
-        } else {
-            projMessage.textContent = "Parabéns! Sua safra está no caminho para bater a meta! 🏆";
-            projMessage.style.backgroundColor = 'rgba(0, 150, 0, 0.1)';
-            projMessage.style.color = 'var(--color-income)';
+        if (projMessage) {
+            projMessage.className = '';
+            if (avgProfit < currentProfit) {
+                projMessage.textContent = "Tendência de queda: Revise seus custos 📉";
+                projMessage.style.backgroundColor = 'rgba(255, 0, 0, 0.1)';
+                projMessage.style.color = 'var(--color-expense)';
+            } else {
+                projMessage.textContent = "Parabéns! Sua safra está no caminho para bater a meta! 🏆";
+                projMessage.style.backgroundColor = 'rgba(0, 150, 0, 0.1)';
+                projMessage.style.color = 'var(--color-income)';
+            }
         }
 
-        projCard.style.display = 'block';
+        if (projCard) projCard.style.display = 'block';
     } catch (e) {
         console.error("renderProjection Crash: ", e);
     }
