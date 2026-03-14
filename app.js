@@ -3060,6 +3060,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    if (regModalW) {
+        regModalW.addEventListener('click', (e) => {
+            if (e.target === regModalW) {
+                requestSafeClose('weighing-modal', closeWeighingModal, 'weighing-form');
+            }
+        });
+    }
+
     if (regModalD) {
         regModalD.addEventListener('click', (e) => {
             if (e.target === regModalD) {
