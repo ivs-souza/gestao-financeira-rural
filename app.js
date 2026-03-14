@@ -1770,7 +1770,9 @@ window.saveWeighing = async (e) => {
 
         alert("Pesagem registrada com sucesso!");
         closeWeighingModal();
-        updateDashboard();
+        
+        // Disparar evento global para atualizar KPI sem dependência direta com o Dashboard
+        window.dispatchEvent(new CustomEvent('weighingUpdated'));
 
     } catch (err) {
         console.error("Erro ao salvar pesagem:", err);
@@ -1782,6 +1784,13 @@ window.saveWeighing = async (e) => {
         }
     }
 };
+
+// Hook global para atualizar KPI após nova pesagem, mantendo isolamento de escopo
+window.addEventListener('weighingUpdated', () => {
+    if (typeof renderProjection === 'function') {
+        renderProjection();
+    }
+});
 
 /* ==========================================================================
    HERD RECONCILIATION LOGIC
